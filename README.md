@@ -93,6 +93,23 @@ curl -X POST https://<tu-servicio>/api/proactive \
 
 Si el usuario ya inició conversación y el `serviceUrl` sigue vigente, recibirá el mensaje como si el bot lo hubiera escrito manualmente.
 
+### Ejemplo real (Render + Teams)
+
+````bash
+curl -H "X-API-Key: <tu token>" https://sdp-mda-bot.onrender.com/api/conversations
+# =>
+# {"items":[{"conversation_id":"a:1r4hcvyU4Inm9Jp8LuzwuC7H_6TOjS7WV7bhPH4qYOEBJG6uOP-7cSY0jY6tyneHY_iRtZZSERGEw-45gI_qsmQERII9ZboG1Q5ufUw00YnkF4KCCgFu_QoErsiLyx0Y3","user_id":"29:1BZc2KzAzKqK3rGtICfbDTB0rvbRGyGK4iiEt_2zZeGCSOY6viACXkJsjMvmxcrhg6a439a2V4-RFWYccfV3DDg","aad_object_id":"e299239f-95ce-41dd-911c-0f6f17f2be1b","tenant_id":"46d67256-4eb1-491e-93ed-c27f8262d672","service_url":"https://smba.trafficmanager.net/amer/46d67256-4eb1-491e-93ed-c27f8262d672/","user_name":"Juan Carlos   Melquiades"}]}
+
+curl -X POST https://sdp-mda-bot.onrender.com/api/proactive \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <tu token>" \
+  -d '{
+        "conversation_id": "a:1r4hcvyU4Inm9Jp8LuzwuC7H_6TOjS7WV7bhPH4qYOEBJG6uOP-7cSY0jY6tyneHY_iRtZZSERGEw-45gI_qsmQERII9ZboG1Q5ufUw00YnkF4KCCgFu_QoErsiLyx0Y3",
+        "message": "¿Estás ahí?"
+      }'
+# => {"ok": true}
+````
+
 ## Arquitectura y flujo
 
 1. **Teams → FastAPI**: `/api/messages` recibe cada actividad y la entrega al `BotFrameworkAdapter`.
