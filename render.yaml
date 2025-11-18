@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: teams-gw
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.teams_gw.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /__ready
+    envVars:
+      - key: MicrosoftAppType
+        value: SingleTenant
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MICROSOFT_APP_ID
+        sync: false
+      - key: MICROSOFT_APP_PASSWORD
+        sync: false
+      - key: MICROSOFT_APP_TENANT_ID
+        sync: false
+      - key: MICROSOFT_APP_OAUTH_SCOPE
+        sync: false
+      - key: BOT_DISPLAY_NAME
+        value: bot de Teams
+      - key: BOT_DEFAULT_REPLY
+        value: Hola, soy tu bot de Teams.
+      - key: PROACTIVE_DEFAULT_MESSAGE
+        value: Hola, este es un mensaje proactivo.
+      - key: PROACTIVE_API_KEY
+        sync: false
