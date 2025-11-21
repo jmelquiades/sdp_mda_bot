@@ -107,6 +107,33 @@ Respuesta (recortada):
 
 Puedes usar esos campos para poblar las Adaptive Cards demo (p. ej., mostrar `display_id`, `subject`, `status.name`, `requester.name`, `site.name`, etc.). Basta con mapear `type` → función dentro de `cards.py` y reemplazar los valores literales de cada tarjeta por los que vengan en el JSON.
 
+#### Ejemplo específico para alertas
+
+El controlador de alertas puede enviar algo como:
+
+```json
+{
+  "type": "Alerta",
+  "nivel": "Nivel 1",
+  "titulo": "Alerta temprana de ticket sin atención",
+  "cuerpo": "El ticket #147 (“Reporte de Incidentes”) lleva 1.2 días sin atención desde su asignación. Se ha escalado a supervisor_mesa.",
+  "url": "https://atenciónalcliente.criteria.pe"
+}
+```
+
+Ese payload se corresponde con la tarjeta `demo_alert_card()` (botón “Ir al tablero”). Cuando conectes tu backend, bastará con mapear `type == "Alerta"` a la función que renderiza la card con esos campos.
+
+Los niveles se transforman automáticamente en colores y destinatarios:
+
+| Nivel | Destinatario | Estilo |
+|-------|--------------|--------|
+| `Nivel 1` | Supervisor de Mesa | `attention` (rojo) |
+| `Nivel 2` | Jefe de Operaciones | `warning` (ámbar) |
+| `Nivel 3` | Jefe de Servicios | `accent` (azul) |
+| `Nivel 4` | Gerente de TI | `emphasis` (gris) |
+
+Si en el futuro agregas otro nivel, sólo debes extender el mapa en `ALERT_LEVEL_CONFIG` dentro de `cards.py`.
+
 ## Envío proactivo vía curl
 
 1. Lista las conversaciones conocidas (requiere `PROACTIVE_API_KEY` si está configurado):

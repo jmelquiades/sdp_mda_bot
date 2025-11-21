@@ -3,6 +3,39 @@ from __future__ import annotations
 from typing import Any, Dict
 
 
+ALERT_LEVEL_CONFIG = {
+    "Nivel 1": {
+        "style": "attention",
+        "audience": "Supervisor de Mesa",
+        "icon": "https://adaptivecards.io/content/People/person2.png",
+    },
+    "Nivel 2": {
+        "style": "warning",
+        "audience": "Jefe de Operaciones",
+        "icon": "https://adaptivecards.io/content/People/person3.png",
+    },
+    "Nivel 3": {
+        "style": "accent",
+        "audience": "Jefe de Servicios",
+        "icon": "https://adaptivecards.io/content/People/person1.png",
+    },
+    "Nivel 4": {
+        "style": "emphasis",
+        "audience": "Gerente de TI",
+        "icon": "https://adaptivecards.io/content/People/person5.png",
+    },
+}
+
+
+def _resolve_alert_level(level: str) -> Dict[str, str]:
+    default = {
+        "style": "attention",
+        "audience": "Equipo responsable",
+        "icon": "https://adaptivecards.io/content/People/person7.png",
+    }
+    return ALERT_LEVEL_CONFIG.get(level, default)
+
+
 def demo_ticket_card() -> Dict[str, Any]:
     """Tarjeta de ejemplo para tickets."""
 
@@ -197,41 +230,68 @@ def demo_report_card() -> Dict[str, Any]:
 def demo_alert_card() -> Dict[str, Any]:
     """Alerta visual para incidentes críticos."""
 
+    level = "Nivel 1"
+    config = _resolve_alert_level(level)
+
     return {
         "type": "AdaptiveCard",
         "version": "1.5",
         "body": [
             {
-                "type": "Container",
-                "style": "attention",
+                "type": "ColumnSet",
+                "style": config["style"],
                 "bleed": True,
-                "items": [
+                "columns": [
                     {
-                        "type": "TextBlock",
-                        "text": "Alerta crítica",
-                        "weight": "Bolder",
-                        "size": "Medium",
-                    },
-                    {
-                        "type": "TextBlock",
-                        "text": "Servicio ERP con latencia elevada desde 10:32.",
-                        "wrap": True,
-                        "spacing": "Small",
-                    },
-                    {
-                        "type": "TextBlock",
-                        "text": "Impacto: Usuarios de facturación.",
-                        "wrap": True,
-                        "spacing": "Small",
-                    },
-                    {
-                        "type": "FactSet",
-                        "facts": [
-                            {"title": "Severidad", "value": "High"},
-                            {"title": "Owner", "value": "NOC"},
-                            {"title": "Ticket", "value": "#INC-4021"},
+                        "type": "Column",
+                        "width": "auto",
+                        "items": [
+                            {
+                                "type": "Image",
+                                "url": config["icon"],
+                                "size": "Small",
+                                "style": "person",
+                            }
                         ],
                     },
+                    {
+                        "type": "Column",
+                        "width": "stretch",
+                        "items": [
+                            {
+                                "type": "TextBlock",
+                                "text": "Alerta temprana de ticket sin atención",
+                                "weight": "Bolder",
+                                "size": "Medium",
+                            },
+                            {
+                                "type": "TextBlock",
+                                "text": f"Dirigido a: {config['audience']}",
+                                "isSubtle": True,
+                                "spacing": "None",
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "TextBlock",
+                "text": "El ticket #147 (“Reporte de Incidentes”) lleva 1.2 días sin atención desde su asignación.",
+                "wrap": True,
+                "spacing": "Small",
+            },
+            {
+                "type": "TextBlock",
+                "text": "Se ha escalado a supervisor_mesa.",
+                "wrap": True,
+                "spacing": "Small",
+            },
+            {
+                "type": "FactSet",
+                "facts": [
+                    {"title": "Nivel", "value": level},
+                    {"title": "Ticket", "value": "#147"},
+                    {"title": "Servicio", "value": "Service Desk Plus"},
                 ],
             },
             {
@@ -239,8 +299,8 @@ def demo_alert_card() -> Dict[str, Any]:
                 "actions": [
                     {
                         "type": "Action.OpenUrl",
-                        "title": "Ver tablero",
-                        "url": "https://contoso.com/alertas/inc-4021",
+                        "title": "Ir al tablero",
+                        "url": "https://atenciónalcliente.criteria.pe",
                     }
                 ],
             },
