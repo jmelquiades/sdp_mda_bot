@@ -7,22 +7,22 @@ ALERT_LEVEL_CONFIG = {
     "Nivel 1": {
         "style": "emphasis",
         "audience": "Supervisor de Mesa",
-        "icon": "https://adaptivecards.io/content/People/person2.png",
+        "icon": "https://i.ibb.co/tprYrjgX/N1.png",
     },
     "Nivel 2": {
         "style": "warning",
         "audience": "Jefe de Operaciones",
-        "icon": "https://adaptivecards.io/content/People/person3.png",
+        "icon": "https://i.ibb.co/yFFCgbsP/N2.png",
     },
     "Nivel 3": {
         "style": "accent",
         "audience": "Jefe de Servicios",
-        "icon": "https://adaptivecards.io/content/People/person1.png",
+        "icon": "https://i.ibb.co/k6BDfgXL/N3.png",
     },
     "Nivel 4": {
         "style": "attention",
         "audience": "Gerente de TI",
-        "icon": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
+        "icon": "https://i.ibb.co/8DxrZDpW/N4.png",
     },
 }
 
