@@ -235,6 +235,9 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
     title = payload.get("titulo") or "Alerta temprana"
     body = payload.get("cuerpo") or ""
     url = payload.get("url") or "https://example.org"
+    ticket_id = payload.get("ticket_id") or "N/A"
+    subject = payload.get("subject") or "Sin asunto"
+    umbral = payload.get("umbral") or "-"
 
     return {
         "type": "AdaptiveCard",
@@ -284,11 +287,30 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
                 "spacing": "Small",
             },
             {
-                "type": "FactSet",
-                "facts": [
-                    {"title": "Nivel", "value": level},
-                    {"title": "Dirigido a", "value": config["audience"]},
-                    {"title": "Destino", "value": "Service Desk Plus"},
+                "type": "Table",
+                "firstRowAsHeader": True,
+                "columns": [
+                    {"width": 1},
+                    {"width": 1},
+                    {"width": 1},
+                ],
+                "rows": [
+                    {
+                        "type": "TableRow",
+                        "cells": [
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Ticket"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Asunto"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Umbral"}]},
+                        ],
+                    },
+                    {
+                        "type": "TableRow",
+                        "cells": [
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": ticket_id}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": subject, "wrap": True}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": umbral}]},
+                        ],
+                    },
                 ],
             },
             {

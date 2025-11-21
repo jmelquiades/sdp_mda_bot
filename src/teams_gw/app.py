@@ -38,7 +38,7 @@ log = logging.getLogger("teams_gw.app")
 class ProactiveMessageRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    message: str = Field(..., min_length=1, description="Texto que se enviará al usuario.")
+    message: Optional[str] = Field(default=None, description="Texto opcional que se enviará al usuario.")
     conversation_id: Optional[str] = Field(default=None, description="conversation.id almacenado previamente.")
     user_id: Optional[str] = Field(default=None, description="ChannelAccount.id del usuario.")
     aad_object_id: Optional[str] = Field(default=None, description="Azure AD object id del usuario.")
@@ -48,6 +48,8 @@ class ProactiveMessageRequest(BaseModel):
     def validate_target(self) -> "ProactiveMessageRequest":
         if not any([self.conversation_id, self.user_id, self.aad_object_id]):
             raise ValueError("Debes indicar conversation_id, user_id o aad_object_id.")
+        if not (self.message or self.payload):
+            raise ValueError("Debes enviar al menos message o payload.")
         return self
 
 
@@ -225,7 +227,8 @@ async def send_proactive(payload: ProactiveMessageRequest, _: None = Depends(ver
         raise HTTPException(status_code=404, detail="conversation_reference_not_found")
 
     async def _send_proactive(turn_context: TurnContext):
-        await turn_context.send_activity(payload.message or settings.PROACTIVE_DEFAULT_MESSAGE)
+        if payload.message:
+            await turn_context.send_activity(payload.message)
         attachment = _maybe_build_attachment(payload.payload)
         if attachment:
             await turn_context.send_activity(attachment)
