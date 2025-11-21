@@ -53,6 +53,7 @@ pytest
 1. Registra el bot en Azure y apunta el **Messaging endpoint** a `https://<tu-servicio>/api/messages`.
 2. Escribe cualquier texto (ej. `Hola`). El bot responderá con `BOT_DEFAULT_REPLY`.
 3. El bot guardará la `conversation.id` y el `user_id` para permitir envíos proactivos.
+4. Envía `Ticket` o `Tabla` para ver las tarjetas AdaptiveCard de demostración (`src/teams_gw/cards.py`). Así puedes enseñarle al cliente distintos layouts antes de conectarte al backend definitivo.
 
 ## Envío proactivo vía curl
 
@@ -123,6 +124,7 @@ curl -X POST https://sdp-mda-bot.onrender.com/api/proactive \
 | `src/teams_gw/app.py` | Inicializa FastAPI, aplica el parche MSAL, confía en `serviceUrl`, expone `/api/messages`, `/api/conversations`, `/api/proactive` y rutas de salud. |
 | `src/teams_gw/bot.py` | Bot mínimo que guarda conversaciones y responde usando plantillas configurables. |
 | `src/teams_gw/conversation_store.py` | Registro en memoria de las conversaciones; permite buscarlas por `conversation_id`, `user_id` o `aad_object_id`. |
+| `src/teams_gw/cards.py` | Plantillas de Adaptive Cards (Ticket, Tabla) que se envían como demos al recibir esos comandos. |
 | `src/teams_gw/settings.py` | Maneja configuración vía Pydantic `BaseSettings`. |
 | `src/teams_gw/health.py` | Endpoints de diagnóstico (`/__ready`, `/health`, `/__env`, `/__auth-probe`). |
 | `tests/test_formatters.py` | Pruebas para el `ConversationStore`. |
