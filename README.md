@@ -159,7 +159,7 @@ Respuesta tipo:
 }
 ```
 
-2. Usa cualquiera de los identificadores (`conversation_id`, `user_id` o `aad_object_id`) para enviar un mensaje:
+2. Usa cualquiera de los identificadores (`conversation_id`, `user_id` o `aad_object_id`) para enviar un mensaje. Opcionalmente puedes incluir `payload` para que el bot renderice una tarjeta específica (hoy soporta `type: "Alerta"`):
 
 ```bash
 curl -X POST https://<tu-servicio>/api/proactive \
@@ -167,11 +167,18 @@ curl -X POST https://<tu-servicio>/api/proactive \
   -H "X-API-Key: <token>" \
   -d '{
         "conversation_id": "19:abc123@thread.v2",
-        "message": "Hola, este es un recordatorio proactivo"
+        "message": "Hola, este es un recordatorio proactivo",
+        "payload": {
+          "type": "Alerta",
+          "nivel": "Nivel 1",
+          "titulo": "Alerta temprana",
+          "cuerpo": "El ticket #147 lleva 1.2 días sin atención.",
+          "url": "https://mi-tablero"
+        }
       }'
 ```
 
-Si el usuario ya inició conversación y el `serviceUrl` sigue vigente, recibirá el mensaje como si el bot lo hubiera escrito manualmente.
+Si el usuario ya inició conversación y el `serviceUrl` sigue vigente, recibirá el mensaje textual y, si enviaste `payload`, también la Adaptive Card correspondiente.
 
 ### Ejemplo real (Render + Teams)
 

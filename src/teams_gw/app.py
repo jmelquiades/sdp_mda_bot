@@ -16,15 +16,17 @@ from botbuilder.core import (
     BotFrameworkAdapterSettings,
     ConversationState,
     MemoryStorage,
+    MessageFactory,
     TurnContext,
 )
-from botbuilder.schema import Activity
+from botbuilder.schema import Activity, Attachment
 from botframework.connector import models as connector_models  # <-- para capturar el error
 from botframework.connector.auth import MicrosoftAppCredentials
 from botframework.connector.auth import microsoft_app_credentials as mac
 from msal import ConfidentialClientApplication
 
 from .bot import TeamsGatewayBot
+from .cards import build_alert_card
 from .conversation_store import conversation_store
 from .health import router as health_router
 from .settings import settings
@@ -40,6 +42,7 @@ class ProactiveMessageRequest(BaseModel):
     conversation_id: Optional[str] = Field(default=None, description="conversation.id almacenado previamente.")
     user_id: Optional[str] = Field(default=None, description="ChannelAccount.id del usuario.")
     aad_object_id: Optional[str] = Field(default=None, description="Azure AD object id del usuario.")
+    payload: Optional[dict[str, Any]] = Field(default=None, description="Payload opcional para renderizar tarjetas.")
 
     @model_validator(mode="after")
     def validate_target(self) -> "ProactiveMessageRequest":
@@ -223,9 +226,31 @@ async def send_proactive(payload: ProactiveMessageRequest, _: None = Depends(ver
 
     async def _send_proactive(turn_context: TurnContext):
         await turn_context.send_activity(payload.message or settings.PROACTIVE_DEFAULT_MESSAGE)
+        attachment = _maybe_build_attachment(payload.payload)
+        if attachment:
+            await turn_context.send_activity(attachment)
 
     await adapter.continue_conversation(reference, _send_proactive, settings.MICROSOFT_APP_ID)
     return {"ok": True}
+
+
+def _maybe_build_attachment(custom_payload: Optional[dict[str, Any]]):
+    if not custom_payload or not isinstance(custom_payload, dict):
+        return None
+    payload_type = (custom_payload.get("type") or "").lower()
+    card_content: Optional[dict[str, Any]] = None
+
+    if payload_type == "alerta":
+        card_content = build_alert_card(custom_payload)
+
+    if not card_content:
+        return None
+
+    attachment = Attachment(
+        content_type="application/vnd.microsoft.card.adaptive",
+        content=card_content,
+    )
+    return MessageFactory.attachment(attachment)
 
 
 async def _extract_error_details(error: connector_models.ErrorResponseException) -> tuple[Any, Any, str]:
