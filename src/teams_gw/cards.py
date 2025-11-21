@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 ALERT_LEVEL_CONFIG = {
     "Nivel 1": {
-        "style": "attention",
+        "style": "emphasis",
         "audience": "Supervisor de Mesa",
         "icon": "https://adaptivecards.io/content/People/person2.png",
     },
@@ -20,9 +20,9 @@ ALERT_LEVEL_CONFIG = {
         "icon": "https://adaptivecards.io/content/People/person1.png",
     },
     "Nivel 4": {
-        "style": "emphasis",
+        "style": "attention",
         "audience": "Gerente de TI",
-        "icon": "https://adaptivecards.io/content/People/person5.png",
+        "icon": "https://adaptivecards.io/content/People/person4.png",
     },
 }
 
@@ -235,9 +235,38 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
     title = payload.get("titulo") or "Alerta temprana"
     body = payload.get("cuerpo") or ""
     url = payload.get("url") or "https://example.org"
-    ticket_id = payload.get("ticket_id") or "N/A"
-    subject = payload.get("subject") or "Sin asunto"
-    umbral = payload.get("umbral") or "-"
+    ticket_id = payload.get("ticket_id")
+    subject = payload.get("subject")
+    umbral = payload.get("umbral")
+    requester = payload.get("requester")
+    created_at = payload.get("created_at")
+
+    def _row(label: str, value: str | None) -> dict[str, Any] | None:
+        if not value:
+            return None
+        return {
+            "type": "TableRow",
+            "cells": [
+                {
+                    "type": "TableCell",
+                    "items": [{"type": "TextBlock", "text": label, "weight": "Bolder"}],
+                    "style": "accent",
+                },
+                {
+                    "type": "TableCell",
+                    "items": [{"type": "TextBlock", "text": value, "wrap": True}],
+                },
+            ],
+        }
+
+    detail_rows = list(filter(None, [
+        _row("Ticket", ticket_id),
+        _row("Asunto", subject),
+        _row("Solicitante", requester),
+        _row("Creado", created_at),
+        _row("Umbral", umbral),
+        _row("Nivel", level),
+    ]))
 
     return {
         "type": "AdaptiveCard",
@@ -280,37 +309,16 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
                     },
                 ],
             },
-            {
-                "type": "TextBlock",
-                "text": body,
-                "wrap": True,
-                "spacing": "Small",
-            },
+            {"type": "TextBlock", "text": body, "wrap": True, "spacing": "Small"},
             {
                 "type": "Table",
-                "firstRowAsHeader": True,
                 "columns": [
-                    {"width": 1},
-                    {"width": 1},
-                    {"width": 1},
+                    {"width": 0.8},
+                    {"width": 1.2},
                 ],
-                "rows": [
-                    {
-                        "type": "TableRow",
-                        "cells": [
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Ticket"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Asunto"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Umbral"}]},
-                        ],
-                    },
-                    {
-                        "type": "TableRow",
-                        "cells": [
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": ticket_id}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": subject, "wrap": True}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": umbral}]},
-                        ],
-                    },
+                "rows": detail_rows or [
+                    _row("Ticket", ticket_id or "N/A"),
+                    _row("Umbral", umbral or "-"),
                 ],
             },
             {
