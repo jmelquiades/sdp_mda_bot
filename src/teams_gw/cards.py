@@ -227,11 +227,14 @@ def demo_report_card() -> Dict[str, Any]:
     }
 
 
-def demo_alert_card() -> Dict[str, Any]:
-    """Alerta visual para incidentes críticos."""
+def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Construye la tarjeta de alerta a partir del JSON recibido."""
 
-    level = "Nivel 1"
+    level = payload.get("nivel") or "Nivel 1"
     config = _resolve_alert_level(level)
+    title = payload.get("titulo") or "Alerta temprana"
+    body = payload.get("cuerpo") or ""
+    url = payload.get("url") or "https://example.org"
 
     return {
         "type": "AdaptiveCard",
@@ -260,7 +263,7 @@ def demo_alert_card() -> Dict[str, Any]:
                         "items": [
                             {
                                 "type": "TextBlock",
-                                "text": "Alerta temprana de ticket sin atención",
+                                "text": title,
                                 "weight": "Bolder",
                                 "size": "Medium",
                             },
@@ -276,13 +279,7 @@ def demo_alert_card() -> Dict[str, Any]:
             },
             {
                 "type": "TextBlock",
-                "text": "El ticket #147 (“Reporte de Incidentes”) lleva 1.2 días sin atención desde su asignación.",
-                "wrap": True,
-                "spacing": "Small",
-            },
-            {
-                "type": "TextBlock",
-                "text": "Se ha escalado a supervisor_mesa.",
+                "text": body,
                 "wrap": True,
                 "spacing": "Small",
             },
@@ -290,8 +287,8 @@ def demo_alert_card() -> Dict[str, Any]:
                 "type": "FactSet",
                 "facts": [
                     {"title": "Nivel", "value": level},
-                    {"title": "Ticket", "value": "#147"},
-                    {"title": "Servicio", "value": "Service Desk Plus"},
+                    {"title": "Dirigido a", "value": config["audience"]},
+                    {"title": "Destino", "value": "Service Desk Plus"},
                 ],
             },
             {
@@ -299,13 +296,25 @@ def demo_alert_card() -> Dict[str, Any]:
                 "actions": [
                     {
                         "type": "Action.OpenUrl",
-                        "title": "Ir al tablero",
-                        "url": "https://atenciónalcliente.criteria.pe",
+                        "title": "Ver tablero",
+                        "url": url,
                     }
                 ],
             },
         ],
     }
+
+
+def demo_alert_card() -> Dict[str, Any]:
+    """Alerta visual para incidentes críticos."""
+
+    payload = {
+        "nivel": "Nivel 1",
+        "titulo": "Alerta temprana de ticket sin atención",
+        "cuerpo": "El ticket #147 (“Reporte de Incidentes”) lleva 1.2 días sin atención desde su asignación. Se ha escalado a supervisor_mesa.",
+        "url": "https://atenciónalcliente.criteria.pe",
+    }
+    return build_alert_card(payload)
 
 
 def demo_summary_card() -> Dict[str, Any]:
