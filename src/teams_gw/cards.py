@@ -22,7 +22,7 @@ ALERT_LEVEL_CONFIG = {
     "Nivel 4": {
         "style": "attention",
         "audience": "Gerente de TI",
-        "icon": "https://adaptivecards.io/content/People/person4.png",
+        "icon": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
     },
 }
 
@@ -260,15 +260,15 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
             ],
         }
 
-    detail_rows = list(filter(None, [
-        _row("Ticket", ticket_id),
-        _row("Asunto", subject),
-        _row("Solicitante", requester),
-        _row("Asignado a", technician),
-        _row("Creado", created_at),
-        _row("Umbral", umbral),
+    detail_rows = [
+        _row("Ticket", ticket_id or "N/A"),
+        _row("Asunto", subject or "-"),
+        _row("Solicitante", requester or "-"),
+        _row("Asignado a", technician or "-"),
+        _row("Creado", created_at or "-"),
+        _row("Umbral", umbral or "-"),
         _row("Nivel", level),
-    ]))
+    ]
 
     return {
         "type": "AdaptiveCard",
