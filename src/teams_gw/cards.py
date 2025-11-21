@@ -239,6 +239,7 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
     subject = payload.get("subject")
     umbral = payload.get("umbral")
     requester = payload.get("requester")
+    technician = payload.get("technician")
     created_at = payload.get("created_at")
 
     def _row(label: str, value: str | None) -> dict[str, Any] | None:
@@ -263,6 +264,7 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
         _row("Ticket", ticket_id),
         _row("Asunto", subject),
         _row("Solicitante", requester),
+        _row("Asignado a", technician),
         _row("Creado", created_at),
         _row("Umbral", umbral),
         _row("Nivel", level),
