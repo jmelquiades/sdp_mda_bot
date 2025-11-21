@@ -17,32 +17,37 @@ def demo_ticket_card() -> Dict[str, Any]:
                 "items": [
                     {
                         "type": "TextBlock",
-                        "text": "Supervisor de Mesa",
+                        "text": "Reporte de Incidentes",
                         "weight": "Bolder",
                         "size": "Medium",
                     },
                     {
                         "type": "TextBlock",
-                        "text": "Ticket #118 — Solicitud de actualizar sistema MCP 09-11-2025",
+                        "text": "Ticket #147 · Service Desk Plus",
                         "wrap": True,
                         "spacing": "Small",
                     },
                     {
                         "type": "TextBlock",
-                        "text": "Solicitante: MCP Mesa de Servicios",
+                        "text": "Solicitante: Luis Flores",
                         "wrap": True,
                         "spacing": "Small",
                     },
                     {
                         "type": "TextBlock",
-                        "text": "Creado: 2025-11-12 15:20",
+                        "text": "Asignado a: Juan Carlos Melquiades",
                         "wrap": True,
                         "spacing": "Small",
                     },
                     {
                         "type": "TextBlock",
-                        "text": "Umbral: 7.0 días",
-                        "weight": "Bolder",
+                        "text": "Estado: Asignado · Prioridad: 4.Baja",
+                        "wrap": True,
+                        "spacing": "Small",
+                    },
+                    {
+                        "type": "TextBlock",
+                        "text": "Creado: Nov 20, 2025 06:13 PM · Sitio: Criteria Technologies",
                         "wrap": True,
                         "spacing": "Small",
                     },
@@ -61,13 +66,13 @@ def demo_table_card() -> Dict[str, Any]:
         "body": [
             {
                 "type": "TextBlock",
-                "text": "Reporte de incidencias",
+                "text": "Tickets abiertos",
                 "weight": "Bolder",
                 "size": "Medium",
             },
             {
                 "type": "TextBlock",
-                "text": "Ejemplo de tabla renderizada en Adaptive Cards.",
+                "text": "Ejemplo alimentado con `open_tickets` (Criteria Service Desk).",
                 "isSubtle": True,
                 "wrap": True,
                 "spacing": "Small",
@@ -76,7 +81,8 @@ def demo_table_card() -> Dict[str, Any]:
                 "type": "Table",
                 "firstRowAsHeader": True,
                 "columns": [
-                    {"width": 1},
+                    {"width": 1.2},
+                    {"width": 1.4},
                     {"width": 1},
                     {"width": 1},
                 ],
@@ -85,24 +91,36 @@ def demo_table_card() -> Dict[str, Any]:
                         "type": "TableRow",
                         "cells": [
                             {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Ticket"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Área"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Asunto"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Solicitante"}]},
                             {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Estado"}]},
                         ],
                     },
                     {
                         "type": "TableRow",
                         "cells": [
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "118"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Soporte"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Pendiente"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "147"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Reporte de Incidentes", "wrap": True}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Luis Flores"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Asignado"}]},
                         ],
                     },
                     {
                         "type": "TableRow",
                         "cells": [
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "119"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Infraestructura"}]},
-                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Completado"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "128"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Solicitud de actualizar sistema MCP 09-11-2025", "wrap": True}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "MCP Mesa de Servicios"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Asignado"}]},
+                        ],
+                    },
+                    {
+                        "type": "TableRow",
+                        "cells": [
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "118"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "Solicitud de actualizar sistema MCP 09-11-2025", "wrap": True}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "MCP Mesa de Servicios"}]},
+                            {"type": "TableCell", "items": [{"type": "TextBlock", "text": "En Evaluación"}]},
                         ],
                     },
                 ],
@@ -156,9 +174,9 @@ def demo_report_card() -> Dict[str, Any]:
             {
                 "type": "FactSet",
                 "facts": [
-                    {"title": "Tickets atendidos", "value": "42"},
-                    {"title": "Promedio SLA", "value": "97%"},
-                    {"title": "Escalados", "value": "4"},
+                    {"title": "Tickets abiertos", "value": "6"},
+                    {"title": "Asignados", "value": "3"},
+                    {"title": "Pausados", "value": "2"},
                 ],
             },
             {
@@ -169,7 +187,7 @@ def demo_report_card() -> Dict[str, Any]:
             },
             {
                 "type": "TextBlock",
-                "text": "- Incidente de VPN resuelto.\n- Nuevo flujo de alertas habilitado.",
+                "text": "- Mantenimientos pendientes para MCP.\n- BI Analytics con casos pausados por fabricante.",
                 "wrap": True,
             },
         ],
@@ -193,21 +211,18 @@ def demo_alert_card() -> Dict[str, Any]:
                         "text": "Alerta crítica",
                         "weight": "Bolder",
                         "size": "Medium",
-                        "color": "Light",
                     },
                     {
                         "type": "TextBlock",
                         "text": "Servicio ERP con latencia elevada desde 10:32.",
                         "wrap": True,
                         "spacing": "Small",
-                        "color": "Light",
                     },
                     {
                         "type": "TextBlock",
                         "text": "Impacto: Usuarios de facturación.",
                         "wrap": True,
                         "spacing": "Small",
-                        "color": "Light",
                     },
                     {
                         "type": "FactSet",
@@ -261,7 +276,7 @@ def demo_summary_card() -> Dict[str, Any]:
                         "width": 1,
                         "items": [
                             {"type": "TextBlock", "text": "Tickets abiertos", "isSubtle": True},
-                            {"type": "TextBlock", "text": "15", "weight": "Bolder", "size": "Large"},
+                            {"type": "TextBlock", "text": "6", "weight": "Bolder", "size": "Large"},
                         ],
                     },
                     {
@@ -269,7 +284,7 @@ def demo_summary_card() -> Dict[str, Any]:
                         "width": 1,
                         "items": [
                             {"type": "TextBlock", "text": "Tickets cerrados", "isSubtle": True},
-                            {"type": "TextBlock", "text": "22", "weight": "Bolder", "size": "Large"},
+                            {"type": "TextBlock", "text": "4", "weight": "Bolder", "size": "Large"},
                         ],
                     },
                     {
@@ -277,7 +292,7 @@ def demo_summary_card() -> Dict[str, Any]:
                         "width": 1,
                         "items": [
                             {"type": "TextBlock", "text": "Pendientes críticos", "isSubtle": True},
-                            {"type": "TextBlock", "text": "3", "weight": "Bolder", "size": "Large"},
+                            {"type": "TextBlock", "text": "2", "weight": "Bolder", "size": "Large"},
                         ],
                     },
                 ],
@@ -290,7 +305,7 @@ def demo_summary_card() -> Dict[str, Any]:
             },
             {
                 "type": "TextBlock",
-                "text": "• Equipo de redes trabajando en migración.\n• Se planifica ventana de mantenimiento el viernes.",
+                "text": "• Mayoría de tickets en Service Desk Plus.\n• Caso MCP sigue en evaluación.\n• Dos solicitudes permanecen en pausa por fabricante.",
                 "wrap": True,
             },
         ],

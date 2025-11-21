@@ -55,6 +55,58 @@ pytest
 3. El bot guardará la `conversation.id` y el `user_id` para permitir envíos proactivos.
 4. Envía `Ticket`, `Tabla`, `Reporte`, `Alerta` o `Resumen` para ver las tarjetas AdaptiveCard de demostración (`src/teams_gw/cards.py`). Así puedes enseñarle al cliente distintos layouts antes de conectarte al backend definitivo.
 
+### Catálogo de demos
+
+| Comando | Tarjeta enviada | Breve descripción |
+|---------|-----------------|-------------------|
+| `Ticket` | `demo_ticket_card()` | Encabezado simple usando los campos reales de `display_id`, `subject`, `requester`, etc. |
+| `Tabla` | `demo_table_card()` | Tabla de incidencias con filas reales (tickets 147, 128, 118). |
+| `Reporte` | `demo_report_card()` | Reporte semanal armado con métricas derivadas del JSON (abiertos, asignados, pausados). |
+| `Alerta` | `demo_alert_card()` | Alerta crítica con estilo `attention`, datos clave y botón “Ver tablero”. |
+| `Resumen` | `demo_summary_card()` | Resumen diario con columnas de métricas y notas rápidas basadas en la muestra. |
+
+Los textos e indicadores mostrados en estas tarjetas provienen del JSON de ejemplo (`open_tickets`), así puedes mostrar algo muy cercano a la realidad. Cada función vive en `src/teams_gw/cards.py`, por lo que luego puedes parametrizarlas según el `type` que te envíe tu backend.
+
+### Ejemplo de payload real
+
+Puedes conectarte a cualquier backend que te devuelva JSON. Por ejemplo, el endpoint público de referencia:
+
+```bash
+curl -s https://criteria-sdp-api-gw-op.onrender.com/request/open_tickets \
+  -H "X-Cliente: Criteria Technologies" \
+  -H "X-Api-Key: d9b4d847-1fd1-4f1d-b5da-8c6ab9a3a568"
+```
+
+Respuesta (recortada):
+
+```json
+[
+  {
+    "display_id": "147",
+    "subject": "Reporte de Incidentes",
+    "requester": {"name": "Luis Flores"},
+    "technician": {"name": "Juan Carlos Melquiades"},
+    "status": {"name": "Asignado"},
+    "priority": {"name": "4.Baja"},
+    "site": {"name": "Criteria Technologies"},
+    "dates": {
+      "created": {"display": "Nov 20, 2025 06:13 PM"},
+      "status_changed": {"display": "Nov 20, 2025 06:44 PM"}
+    }
+  },
+  {
+    "display_id": "118",
+    "subject": "Solicitud de actualizar sistema MCP 09-11-2025",
+    "requester": {"name": "MCP Mesa de Servicios"},
+    "status": {"name": "En Evaluación"},
+    "site": {"name": "Minera Colquisiri"},
+    "dates": {"created": {"display": "Nov 12, 2025 10:20 AM"}}
+  }
+]
+```
+
+Puedes usar esos campos para poblar las Adaptive Cards demo (p. ej., mostrar `display_id`, `subject`, `status.name`, `requester.name`, `site.name`, etc.). Basta con mapear `type` → función dentro de `cards.py` y reemplazar los valores literales de cada tarjeta por los que vengan en el JSON.
+
 ## Envío proactivo vía curl
 
 1. Lista las conversaciones conocidas (requiere `PROACTIVE_API_KEY` si está configurado):
