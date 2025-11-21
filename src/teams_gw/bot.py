@@ -6,7 +6,13 @@ from typing import Any
 from botbuilder.core import ActivityHandler, ConversationState, MessageFactory, TurnContext
 from botbuilder.schema import Attachment
 
-from .cards import demo_table_card, demo_ticket_card
+from .cards import (
+    demo_alert_card,
+    demo_report_card,
+    demo_summary_card,
+    demo_table_card,
+    demo_ticket_card,
+)
 from .conversation_store import conversation_store
 from .settings import settings
 
@@ -35,9 +41,17 @@ class TeamsGatewayBot(ActivityHandler):
         if normalized.startswith("ticket"):
             await self._send_card(turn_context, demo_ticket_card(), title="Demo: Ticket")
             return
-
         if normalized.startswith("tabla"):
             await self._send_card(turn_context, demo_table_card(), title="Demo: Tabla")
+            return
+        if normalized.startswith("reporte"):
+            await self._send_card(turn_context, demo_report_card(), title="Demo: Reporte")
+            return
+        if normalized.startswith("alerta"):
+            await self._send_card(turn_context, demo_alert_card(), title="Demo: Alerta")
+            return
+        if normalized.startswith("resumen"):
+            await self._send_card(turn_context, demo_summary_card(), title="Demo: Resumen diario")
             return
 
         reply_text = self._render_reply(incoming_text)
