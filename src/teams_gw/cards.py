@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 ALERT_LEVEL_CONFIG = {
@@ -34,6 +34,17 @@ def _resolve_alert_level(level: str) -> Dict[str, str]:
         "icon": "https://adaptivecards.io/content/People/person7.png",
     }
     return ALERT_LEVEL_CONFIG.get(level, default)
+
+
+def _extract_text(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        for key in ("name", "display", "value", "text"):
+            if key in value and value[key]:
+                return str(value[key])
+        return None
+    return str(value)
 
 
 def demo_ticket_card() -> Dict[str, Any]:
@@ -235,12 +246,12 @@ def build_alert_card(payload: Dict[str, Any]) -> Dict[str, Any]:
     title = payload.get("titulo") or "Alerta temprana"
     body = payload.get("cuerpo") or ""
     url = payload.get("url") or "https://example.org"
-    ticket_id = payload.get("ticket_id")
-    subject = payload.get("subject")
-    umbral = payload.get("umbral")
-    requester = payload.get("requester")
-    technician = payload.get("technician")
-    created_at = payload.get("created_at")
+    ticket_id = _extract_text(payload.get("ticket_id"))
+    subject = _extract_text(payload.get("subject"))
+    umbral = _extract_text(payload.get("umbral"))
+    requester = _extract_text(payload.get("requester"))
+    technician = _extract_text(payload.get("technician"))
+    created_at = _extract_text(payload.get("created_at"))
 
     def _row(label: str, value: str | None) -> dict[str, Any] | None:
         if not value:
