@@ -117,6 +117,8 @@ def render_dashboard_html(roles: List[str]) -> HTMLResponse:
     return HTMLResponse(html)
 
 
+ROWS_FOOTER = ""
+
 DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 <html lang="es">
   <head>
@@ -124,45 +126,45 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controller Dashboard</title>
     <style>
-      :root {{
+      :root {
         color-scheme: light;
         font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background-color: #f5f6fb;
-      }}
-      body {{
+      }
+      body {
         margin: 0;
         padding: 0;
         background: #f5f6fb;
         color: #0f172a;
-      }}
-      .dashboard {{
+      }
+      .dashboard {
         max-width: 1280px;
         margin: 0 auto;
         padding: 32px 24px 48px;
-      }}
-      header {{
+      }
+      header {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: flex-end;
         gap: 16px;
-      }}
-      header h1 {{
+      }
+      header h1 {
         font-size: 28px;
         margin: 0;
         color: #0f172a;
-      }}
-      header p {{
+      }
+      header p {
         margin: 0;
         color: #64748b;
-      }}
-      .summary-grid {{
+      }
+      .summary-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 16px;
         margin-top: 24px;
-      }}
-      .card {{
+      }
+      .card {
         background: #fff;
         border-radius: 16px;
         padding: 20px;
@@ -170,37 +172,37 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         display: flex;
         flex-direction: column;
         gap: 6px;
-      }}
-      .card h3 {{
+      }
+      .card h3 {
         font-size: 14px;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #94a3b8;
         margin: 0;
-      }}
-      .card .value {{
+      }
+      .card .value {
         font-size: 32px;
         font-weight: 600;
         color: #0f172a;
-      }}
-      .card .muted {{
+      }
+      .card .muted {
         font-size: 13px;
         color: #94a3b8;
-      }}
-      .chart-card {{
+      }
+      .chart-card {
         margin-top: 24px;
         background: #fff;
         border-radius: 18px;
         padding: 24px;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-      }}
-      .tabs {{
+      }
+      .tabs {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
         margin-top: 32px;
-      }}
-      .tab {{
+      }
+      .tab {
         border: none;
         background: #e2e8f0;
         color: #475569;
@@ -209,85 +211,85 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
-      }}
-      .tab.active {{
+      }
+      .tab.active {
         background: #0f172a;
         color: #fff;
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
-      }}
-      .role-panel {{
+      }
+      .role-panel {
         margin-top: 20px;
         background: #fff;
         border-radius: 18px;
         padding: 24px;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-      }}
-      .role-header {{
+      }
+      .role-header {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         gap: 16px;
         border-left: 6px solid #2563eb;
         padding-left: 16px;
-      }}
-      .role-header h2 {{
+      }
+      .role-header h2 {
         margin: 0;
         font-size: 22px;
-      }}
-      .role-header p {{
+      }
+      .role-header p {
         margin: 4px 0 0;
         color: #64748b;
-      }}
-      .role-kpi {{
+      }
+      .role-kpi {
         text-align: right;
-      }}
-      .role-kpi .number {{
+      }
+      .role-kpi .number {
         font-size: 36px;
         font-weight: 600;
-      }}
-      .level-grid {{
+      }
+      .level-grid {
         margin-top: 20px;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 16px;
-      }}
-      .level-card {{
+      }
+      .level-card {
         background: #f8fafc;
         border-radius: 14px;
         padding: 16px;
         border: 1px solid #e2e8f0;
-      }}
-      .level-card h4 {{
+      }
+      .level-card h4 {
         margin: 0;
         color: #475569;
         font-size: 14px;
-      }}
-      .level-card .count {{
+      }
+      .level-card .count {
         margin-top: 8px;
         font-size: 28px;
         font-weight: 600;
         color: #0f172a;
-      }}
-      table {{
+      }
+      table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 24px;
         font-size: 14px;
-      }}
-      th, td {{
+      }
+      th, td {
         padding: 12px 8px;
         text-align: left;
-      }}
-      th {{
+      }
+      th {
         font-size: 13px;
         color: #94a3b8;
         font-weight: 500;
         border-bottom: 1px solid #e2e8f0;
-      }}
-      tr + tr td {{
+      }
+      tr + tr td {
         border-top: 1px solid #f1f5f9;
-      }}
-      .badge {{
+      }
+      .badge {
         display: inline-flex;
         align-items: center;
         padding: 2px 10px;
@@ -295,25 +297,25 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-size: 12px;
         background: #e2e8f0;
         color: #475569;
-      }}
-      .empty-state {{
+      }
+      .empty-state {
         padding: 24px;
         text-align: center;
         color: #94a3b8;
-      }}
-      @media (max-width: 768px) {{
-        header {{
+      }
+      @media (max-width: 768px) {
+        header {
           flex-direction: column;
           align-items: flex-start;
-        }}
-        .role-header {{
+        }
+        .role-header {
           flex-direction: column;
           align-items: flex-start;
-        }}
-        .role-kpi {{
+        }
+        .role-kpi {
           text-align: left;
-        }}
-      }}
+        }
+      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   </head>
@@ -358,29 +360,29 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     </div>
     <script>
       const DASHBOARD_CONFIG = __DASHBOARD_CONFIG__;
-      const state = {{
+      const state = {
         data: null,
         activeRole: DASHBOARD_CONFIG.roles[0] || null,
         chart: null,
-      }};
+      };
 
-      function formatDate(value) {{
+      function formatDate(value) {
         if (!value) return "-";
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
-        return date.toLocaleString("es-PE", {{
+        return date.toLocaleString("es-PE", {
           dateStyle: "medium",
           timeStyle: "short",
-        }});
-      }}
+        });
+      }
 
-      function setText(id, value) {{
+      function setText(id, value) {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
-      }}
+      }
 
-      async function loadData() {{
-        try {{
+      async function loadData() {
+        try {
           const response = await fetch("/dashboard/data");
           if (!response.ok) throw new Error("No se pudo obtener la data");
           const payload = await response.json();
@@ -389,121 +391,133 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           renderTabs();
           renderChart();
           renderRole(state.activeRole);
-        }} catch (err) {{
+        } catch (err) {
           console.error(err);
-          setText("role-panel", "No pudimos cargar la información del controller.");
-        }}
-      }}
+          const panel = document.getElementById("role-panel");
+          if (panel) {
+            panel.innerHTML =
+              "<div class='role-panel'><div class='empty-state'>No pudimos cargar la información del controller.</div></div>";
+          }
+        }
+      }
 
-      function renderSummary() {{
-        const summary = state.data.summary || {{}};
+      function renderSummary() {
+        const summary = state.data.summary || {};
         setText("kpi-runs", summary.runs ?? 0);
         setText("kpi-tickets", summary.tickets_monitored ?? 0);
         setText("kpi-alerts-today", summary.alerts_today ?? 0);
         setText("kpi-last-run", formatDate(summary.last_run_finished_at));
         setText("last-updated", "Actualizado: " + formatDate(state.data.refreshed_at));
-      }}
+      }
 
-      function renderTabs() {{
+      function renderTabs() {
         const container = document.getElementById("role-tabs");
         container.innerHTML = "";
-        if (!DASHBOARD_CONFIG.roles.length) {{
+        if (!DASHBOARD_CONFIG.roles.length) {
           container.innerHTML = "<p class='muted'>No hay roles configurados.</p>";
           return;
-        }}
-        DASHBOARD_CONFIG.roles.forEach((role) => {{
+        }
+        DASHBOARD_CONFIG.roles.forEach((role) => {
           const button = document.createElement("button");
           button.className = "tab" + (role === state.activeRole ? " active" : "");
           button.textContent = DASHBOARD_CONFIG.labels[role] || role;
-          button.addEventListener("click", () => {{
+          button.addEventListener("click", () => {
             state.activeRole = role;
             document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
             button.classList.add("active");
             renderRole(role);
-          }});
+          });
           container.appendChild(button);
-        }});
-      }}
+        });
+      }
 
-      function renderChart() {{
+      function renderChart() {
         const ctx = document.getElementById("runs-chart");
         if (!ctx) return;
         const runs = state.data.runs || [];
         const labels = runs.map((item) => formatDate(item.fecha_inicio));
         const values = runs.map((item) => item.tickets || 0);
-        if (state.chart) {{
+        if (state.chart) {
           state.chart.data.labels = labels;
           state.chart.data.datasets[0].data = values;
           state.chart.update();
           return;
-        }}
-        state.chart = new Chart(ctx, {{
+        }
+        state.chart = new Chart(ctx, {
           type: "line",
-          data: {{
+          data: {
             labels,
-            datasets: [{{
-              label: "Tickets procesados",
-              data: values,
-              fill: true,
-              borderColor: "#6366f1",
-              backgroundColor: "rgba(99,102,241,0.1)",
-              tension: 0.4,
-            }}],
-          }},
-          options: {{
-            plugins: {{
-              legend: {{ display: false }},
-            }},
-            scales: {{
-              y: {{
+            datasets: [
+              {
+                label: "Tickets procesados",
+                data: values,
+                fill: true,
+                borderColor: "#6366f1",
+                backgroundColor: "rgba(99,102,241,0.1)",
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+            },
+            scales: {
+              y: {
                 beginAtZero: true,
-                ticks: {{
+                ticks: {
                   precision: 0,
-                }},
-              }},
-            }},
-          }},
-        }});
-      }}
+                },
+              },
+            },
+          },
+        });
+      }
 
-      function renderRole(roleKey) {{
+      function renderRole(roleKey) {
         const container = document.getElementById("role-panel");
-        const roleData = (state.data.roles || {{}})[roleKey];
-        if (!roleData) {{
-          container.innerHTML = "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
+        const roleData = (state.data.roles || {})[roleKey];
+        if (!roleData) {
+          container.innerHTML =
+            "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
           return;
-        }}
+        }
         const levels = roleData.levels
-          .map((lvl) => `
+          .map(
+            (lvl) => `
             <div class="level-card">
-              <h4>${{lvl.label}}</h4>
-              <div class="count">${{lvl.count}}</div>
+              <h4>${lvl.label}</h4>
+              <div class="count">${lvl.count}</div>
             </div>
-          `)
+          `,
+          )
           .join("");
-        const rows = (roleData.notifications || [])
-          .map((item) => `
+        const rows =
+          (roleData.notifications || [])
+            .map(
+              (item) => `
             <tr>
-              <td>#${{item.ticket_id || "-"}}</td>
-              <td><span class="badge">${{item.nivel || "-"}}</span></td>
-              <td>${{item.canal || "-"}}</td>
-              <td>${{formatDate(item.fecha)}}</td>
+              <td>#${item.ticket_id || "-"}</td>
+              <td><span class="badge">${item.nivel || "-"}</span></td>
+              <td>${item.canal || "-"}</td>
+              <td>${formatDate(item.fecha)}</td>
             </tr>
-          `)
-          .join("") || "<tr><td colspan='4' class='empty-state'>Sin alertas recientes.</td></tr>";
+          `,
+            )
+            .join("") || "<tr><td colspan='4' class='empty-state'>Sin alertas recientes.</td></tr>";
         container.innerHTML = `
           <div class="role-panel">
-            <div class="role-header" style="border-color: ${{roleData.color}};">
+            <div class="role-header" style="border-color: ${roleData.color};">
               <div>
-                <h2>${{roleData.label}}</h2>
-                <p>${{roleData.description}}</p>
+                <h2>${roleData.label}</h2>
+                <p>${roleData.description}</p>
               </div>
               <div class="role-kpi">
-                <div class="number">${{roleData.total_alerts}}</div>
+                <div class="number">${roleData.total_alerts}</div>
                 <div class="muted">Alertas vigentes</div>
               </div>
             </div>
-            <div class="level-grid">${{levels}}</div>
+            <div class="level-grid">${levels}</div>
             <table>
               <thead>
                 <tr>
@@ -513,11 +527,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                   <th>Fecha</th>
                 </tr>
               </thead>
-              <tbody>${{rows}}</tbody>
+              <tbody>${rows}</tbody>
             </table>
           </div>
         `;
-      }}
+      }
 
       document.addEventListener("DOMContentLoaded", loadData);
     </script>
