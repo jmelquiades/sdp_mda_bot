@@ -322,42 +322,15 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
       }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   </head>
   <body>
     <div class="dashboard">
       <header>
         <div>
-          <h1>Controller Dashboard</h1>
+          <h1>Backlog Dashboard</h1>
           <p id="last-updated">Actualizando…</p>
         </div>
       </header>
-      <section class="summary-grid">
-        <div class="card">
-          <h3>corridas totales</h3>
-          <div class="value" id="kpi-runs">-</div>
-          <div class="muted">Histórico del controller</div>
-        </div>
-        <div class="card">
-          <h3>tickets monitoreados</h3>
-          <div class="value" id="kpi-tickets">-</div>
-          <div class="muted">Tickets con alguna regla disparada</div>
-        </div>
-        <div class="card">
-          <h3>alertas hoy</h3>
-          <div class="value" id="kpi-alerts-today">-</div>
-          <div class="muted">Acciones ejecutadas en las últimas 24h</div>
-        </div>
-        <div class="card">
-          <h3>última corrida</h3>
-          <div class="value" id="kpi-last-run">-</div>
-          <div class="muted">UTC</div>
-        </div>
-      </section>
-      <section class="chart-card">
-        <h3 style="margin-bottom:12px;color:#475569;">Histórico de corridas</h3>
-        <canvas id="runs-chart" height="120"></canvas>
-      </section>
       <section>
         <div class="tabs" id="role-tabs"></div>
         <div id="role-panel"></div>
@@ -392,9 +365,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           if (!response.ok) throw new Error("No se pudo obtener la data");
           const payload = await response.json();
           state.data = payload;
-          renderSummary();
+          setText("last-updated", "Actualizado: " + formatDate(state.data.refreshed_at));
           renderTabs();
-          renderChart();
           renderRole(state.activeRole);
         } catch (err) {
           console.error(err);
@@ -404,15 +376,6 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               "<div class='role-panel'><div class='empty-state'>No pudimos cargar la información del controller.</div></div>";
           }
         }
-      }
-
-      function renderSummary() {
-        const summary = state.data.summary || {};
-        setText("kpi-runs", summary.runs ?? 0);
-        setText("kpi-tickets", summary.tickets_monitored ?? 0);
-        setText("kpi-alerts-today", summary.alerts_today ?? 0);
-        setText("kpi-last-run", formatDate(summary.last_run_finished_at));
-        setText("last-updated", "Actualizado: " + formatDate(state.data.refreshed_at));
       }
 
       function renderTabs() {
@@ -433,49 +396,6 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             renderRole(role);
           });
           container.appendChild(button);
-        });
-      }
-
-      function renderChart() {
-        const ctx = document.getElementById("runs-chart");
-        if (!ctx) return;
-        const runs = state.data.runs || [];
-        const labels = runs.map((item) => formatDate(item.fecha_inicio));
-        const values = runs.map((item) => item.tickets || 0);
-        if (state.chart) {
-          state.chart.data.labels = labels;
-          state.chart.data.datasets[0].data = values;
-          state.chart.update();
-          return;
-        }
-        state.chart = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Tickets procesados",
-                data: values,
-                fill: true,
-                borderColor: "#6366f1",
-                backgroundColor: "rgba(99,102,241,0.1)",
-                tension: 0.4,
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              legend: { display: false },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  precision: 0,
-                },
-              },
-            },
-          },
         });
       }
 
