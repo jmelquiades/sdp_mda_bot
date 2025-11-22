@@ -47,6 +47,8 @@ pytest
 | Proactivo | `PROACTIVE_DEFAULT_MESSAGE` | Texto fallback para los envíos manuales |
 | | `PROACTIVE_API_KEY` | Token requerido en `X-API-Key`/`Authorization: Bearer` para usar `/api/conversations` y `/api/proactive` |
 | Otros | `LOG_LEVEL` | Nivel de logging (`INFO`) |
+| Dashboard | `CONTROLLER_METRICS_URL` | Endpoint del controller que expone `/controller/metrics` |
+| | `DASHBOARD_ROLES` | Lista de roles visibles en el Tab (`supervisor,jefe_operacion,jefe_servicios,gerente`) |
 
 ## Probar desde Teams
 
@@ -218,3 +220,20 @@ curl -X POST https://sdp-mda-bot.onrender.com/api/proactive \
 | `tests/test_formatters.py` | Pruebas para el `ConversationStore`. |
 
 Con esta plantilla puedes ampliar fácilmente la lógica del bot (ej. hooks a otro backend, tarjetas, acciones, etc.) manteniendo una base lista para responder y enviar mensajes proactivos.
+
+## Dashboard en Tab (nueva vista)
+
+El bot ahora expone un dashboard web en `/dashboard` que consulta el endpoint del controller (`CONTROLLER_METRICS_URL`) y muestra KPIs por rol (Supervisor, Jefe de Operaciones, Jefe de Servicios y Gerente). Cada sección incluye:
+
+- Resumen general (corridas totales, tickets monitoreados, alertas del día, última corrida).
+- Gráfico histórico de tickets procesados.
+- Paneles por rol con breakdown de niveles y alertas recientes.
+
+Para usarlo como Tab en Teams:
+
+1. Asegúrate de que el servicio del controller esté publicado (ej. `https://criteriat-sdp-mda-controller.onrender.com/controller/metrics`).
+2. Configura las variables `CONTROLLER_METRICS_URL` y `DASHBOARD_ROLES` en este bot.
+3. Despliega el bot en Render (o plataforma preferida) y verifica que `https://<bot>/dashboard` carga correctamente.
+4. En Teams, agrega un Tab personalizado apuntando a esa URL.
+
+Si sólo deseas exponer algunos roles, define `DASHBOARD_ROLES` con los valores separados por coma (ej. `supervisor,jefe_operacion`). El endpoint `/dashboard/data` devuelve el JSON listo para el frontend y podrías consumirlo desde otra UI si es necesario.

@@ -8,7 +8,7 @@ from typing import Any, Optional
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from botbuilder.core import (
@@ -28,6 +28,12 @@ from msal import ConfidentialClientApplication
 from .bot import TeamsGatewayBot
 from .cards import build_alert_card
 from .conversation_store import conversation_store
+from .dashboard import (
+    build_dashboard_payload,
+    fetch_controller_metrics,
+    normalize_roles,
+    render_dashboard_html,
+)
 from .health import router as health_router
 from .settings import settings
 
@@ -139,6 +145,7 @@ ADAPTER_KIND = "BotFrameworkAdapter"
 
 conversation_state = ConversationState(MemoryStorage())
 bot = TeamsGatewayBot(conversation_state)
+ACTIVE_DASHBOARD_ROLES = normalize_roles(settings.DASHBOARD_ROLES)
 
 @app.post("/api/messages")
 async def messages(request: Request):
@@ -323,6 +330,23 @@ def _format_inner_error(error: connector_models.ErrorResponseException) -> dict[
 @app.get("/")
 async def root():
     return {"service": app.title, "adapter": ADAPTER_KIND, "ready": True}
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    return render_dashboard_html(ACTIVE_DASHBOARD_ROLES)
+
+
+@app.get("/dashboard/data")
+async def dashboard_data():
+    if not settings.CONTROLLER_METRICS_URL:
+        raise HTTPException(status_code=503, detail="controller_metrics_url_not_configured")
+    try:
+        raw = await fetch_controller_metrics(settings.CONTROLLER_METRICS_URL)
+    except Exception as exc:
+        log.error("Error consulting controller metrics: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_metrics_unavailable")
+    return build_dashboard_payload(raw, ACTIVE_DASHBOARD_ROLES)
 
 @app.get("/__bf-token")
 async def bf_token():

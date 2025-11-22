@@ -31,5 +31,11 @@ class Settings(BaseSettings):
     PROACTIVE_API_KEY: Optional[str] = Field(default=None)
     PORT: int = int(os.getenv("PORT", "8000"))
     ENV: str = os.getenv("ENV", "prod")
+    CONTROLLER_METRICS_URL: str = Field(
+        default="https://criteriat-sdp-mda-controller.onrender.com/controller/metrics"
+    )
+    DASHBOARD_ROLES: str = Field(
+        default="supervisor,jefe_operacion,jefe_servicios,gerente"
+    )
 
 settings = Settings()
