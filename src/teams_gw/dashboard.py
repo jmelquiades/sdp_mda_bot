@@ -66,6 +66,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     notifications = raw.get("recent_notifications") or []
     runs = raw.get("recent_runs") or []
     summary = raw.get("summary") or {}
+    role_insights = raw.get("role_insights") or {}
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -103,6 +104,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "summary": summary,
         "roles": roles_payload,
         "runs": runs,
+        "insights": role_insights,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -194,6 +196,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-size: 13px;
         color: #94a3b8;
       }
+      .muted {
+        color: #94a3b8;
+      }
       .chart-card {
         margin-top: 24px;
         background: #fff;
@@ -275,6 +280,79 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-weight: 600;
         color: #0f172a;
       }
+      .insights-grid {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 16px;
+      }
+      .insight-card {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 18px;
+        border: 1px solid #e2e8f0;
+      }
+      .insight-card h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: #0f172a;
+      }
+      .insight-card p {
+        margin: 0 0 12px;
+        color: #475569;
+        font-size: 13px;
+      }
+      .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .chip {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .ratio-pill {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        color: #0f172a;
+        background: rgba(59, 130, 246, 0.15);
+      }
+      .ratio-pill.danger {
+        background: rgba(248, 113, 113, 0.2);
+        color: #b91c1c;
+      }
+      .risk-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .risk-table th,
+      .risk-table td {
+        padding: 8px 6px;
+        font-size: 13px;
+      }
+      .risk-table th {
+        color: #94a3b8;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .risk-table tr + tr td {
+        border-top: 1px solid #f1f5f9;
+      }
+      .action-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .action-link:hover {
+        text-decoration: underline;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -319,6 +397,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
         .role-kpi {
           text-align: left;
+        }
+        .insights-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -407,6 +488,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
           return;
         }
+        const insights = ((state.data.insights || {})[roleKey]) || null;
+        const insightsHtml = buildInsightsHtml(roleKey, insights);
         const levels = roleData.levels
           .map(
             (lvl) => `
@@ -443,6 +526,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               </div>
             </div>
             <div class="level-grid">${levels}</div>
+            ${insightsHtml}
             <table>
               <thead>
                 <tr>
@@ -454,6 +538,62 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               </thead>
               <tbody>${rows}</tbody>
             </table>
+          </div>
+        `;
+      }
+
+      function buildInsightsHtml(roleKey, insights) {
+        if (!insights || roleKey !== "supervisor") {
+          return "";
+        }
+        const atRiskRows =
+          (insights.at_risk || [])
+            .map((item) => {
+              const pillClass = item.ratio >= 0.9 ? "ratio-pill danger" : "ratio-pill";
+              const link = item.ticket_link
+                ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>`
+                : "-";
+              return `
+                <tr>
+                  <td>#${item.ticket_id}</td>
+                  <td>${item.priority || "-"}</td>
+                  <td>${item.active_days} / ${item.threshold_days} días</td>
+                  <td><span class="${pillClass}">${Math.round(item.ratio * 100)}%</span></td>
+                  <td>${link}</td>
+                </tr>
+              `;
+            })
+            .join("") || "<tr><td colspan='5' class='empty-state'>Sin tickets cerca al umbral.</td></tr>";
+        const chipList =
+          (insights.priority_breakdown || [])
+            .map((item) => `<span class="chip"><span>${item.label}</span><strong>${item.count}</strong></span>`)
+            .join("") || "<p class='muted'>Sin tickets monitoreados.</p>";
+        const reminders = insights.reminders_today || {};
+        const lastSent = reminders.last_sent_at ? formatDate(reminders.last_sent_at) : "Sin envíos hoy.";
+        return `
+          <div class="insights-grid">
+            <div class="insight-card">
+              <h3>Próximos a escalar</h3>
+              <p>Tickets que se acercan al umbral de escalamiento (${insights.threshold_days} días hábiles).</p>
+              <table class="risk-table">
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Prioridad</th>
+                    <th>Días activos</th>
+                    <th>Progreso</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${atRiskRows}</tbody>
+              </table>
+            </div>
+            <div class="insight-card">
+              <h3>Prioridades y recordatorios</h3>
+              <div class="chip-list">${chipList}</div>
+              <p><strong>${reminders.total || 0}</strong> recordatorios hoy (${reminders.tickets || 0} tickets).</p>
+              <p>Último envío: ${lastSent}</p>
+            </div>
           </div>
         `;
       }
