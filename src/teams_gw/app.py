@@ -33,6 +33,7 @@ from .dashboard import (
     fetch_controller_metrics,
     normalize_roles,
     render_dashboard_html,
+    render_service_dashboard_html,
 )
 from .health import router as health_router
 from .settings import settings
@@ -335,6 +336,11 @@ async def root():
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page():
     return render_dashboard_html(ACTIVE_DASHBOARD_ROLES)
+
+
+@app.get("/dashboard/service", response_class=HTMLResponse)
+async def service_dashboard_page():
+    return render_service_dashboard_html()
 
 
 @app.get("/dashboard/data")

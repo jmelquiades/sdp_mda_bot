@@ -221,19 +221,17 @@ curl -X POST https://sdp-mda-bot.onrender.com/api/proactive \
 
 Con esta plantilla puedes ampliar fácilmente la lógica del bot (ej. hooks a otro backend, tarjetas, acciones, etc.) manteniendo una base lista para responder y enviar mensajes proactivos.
 
-## Dashboard en Tab (nueva vista)
+## Dashboards web
 
-El bot ahora expone un dashboard web en `/dashboard` que consulta el endpoint del controller (`CONTROLLER_METRICS_URL`) y muestra KPIs por rol (Supervisor, Jefe de Operaciones, Jefe de Servicios y Gerente). Cada sección incluye:
+El bot expone dos vistas basadas en los datos del controller (`CONTROLLER_METRICS_URL`):
 
-- Resumen general (corridas totales, tickets monitoreados, alertas del día, última corrida).
-- Gráfico histórico de tickets procesados.
-- Paneles por rol con breakdown de niveles y alertas recientes.
+1. `/dashboard/service`: KPIs de disponibilidad del controller (corridas totales, tickets procesados, alertas del día, tabla de corridas e histórico).
+2. `/dashboard`: tablero de backlog por rol (Supervisor, Jefe de Operaciones, Jefe de Servicios y Gerente), con sus alertas recientes y niveles.
 
-Para usarlo como Tab en Teams:
+Ambas se actualizan consumiendo `/dashboard/data`. Para usarlas como Tab en Teams:
 
-1. Asegúrate de que el servicio del controller esté publicado (ej. `https://criteriat-sdp-mda-controller.onrender.com/controller/metrics`).
-2. Configura las variables `CONTROLLER_METRICS_URL` y `DASHBOARD_ROLES` en este bot.
-3. Despliega el bot en Render (o plataforma preferida) y verifica que `https://<bot>/dashboard` carga correctamente.
-4. En Teams, agrega un Tab personalizado apuntando a esa URL.
+1. Configura `CONTROLLER_METRICS_URL` y `DASHBOARD_ROLES` en Render.
+2. Asegúrate de que el controller esté accesible (ej. `https://criteriat-sdp-mda-controller.onrender.com/controller/metrics`).
+3. Despliega el bot y apunta el Tab de Teams a `https://<bot>/dashboard/service` (disponibilidad) o `https://<bot>/dashboard` (roles).
 
-Si sólo deseas exponer algunos roles, define `DASHBOARD_ROLES` con los valores separados por coma (ej. `supervisor,jefe_operacion`). El endpoint `/dashboard/data` devuelve el JSON listo para el frontend y podrías consumirlo desde otra UI si es necesario.
+`/dashboard/data` entrega el JSON ya normalizado, por lo que también puedes reutilizarlo en otras UIs si es necesario.

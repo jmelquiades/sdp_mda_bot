@@ -117,6 +117,11 @@ def render_dashboard_html(roles: List[str]) -> HTMLResponse:
     return HTMLResponse(html)
 
 
+def render_service_dashboard_html() -> HTMLResponse:
+    html = SERVICE_TEMPLATE
+    return HTMLResponse(html)
+
+
 ROWS_FOOTER = ""
 
 DASHBOARD_TEMPLATE = """<!DOCTYPE html>
@@ -534,6 +539,236 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       }
 
       document.addEventListener("DOMContentLoaded", loadData);
+    </script>
+  </body>
+</html>
+"""
+
+
+SERVICE_TEMPLATE = """<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Disponibilidad del Controller</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background-color: #f5f6fb;
+      }
+      body {
+        margin: 0;
+        background: #eef2ff;
+        color: #0f172a;
+      }
+      .dashboard {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      header h1 {
+        font-size: 30px;
+        margin-bottom: 6px;
+      }
+      header p {
+        color: #475569;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      }
+      .card h3 {
+        margin: 0;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #94a3b8;
+        letter-spacing: 0.04em;
+      }
+      .card .value {
+        margin-top: 8px;
+        font-size: 30px;
+        font-weight: 600;
+      }
+      .card small {
+        color: #94a3b8;
+      }
+      .chart-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 24px;
+        margin-top: 28px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      }
+      .chart-card h3 {
+        margin: 0 0 12px;
+        color: #475569;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 24px;
+        background: #fff;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      }
+      th, td {
+        padding: 14px;
+        text-align: left;
+      }
+      th {
+        font-size: 13px;
+        color: #94a3b8;
+        background: #f8fafc;
+      }
+      tr + tr td {
+        border-top: 1px solid #f1f5f9;
+      }
+      .status-ok {
+        color: #14b8a6;
+        font-weight: 600;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="dashboard">
+      <header>
+        <h1>Disponibilidad del Controller</h1>
+        <p id="service-last-updated">Actualizando…</p>
+      </header>
+      <section class="summary-grid">
+        <div class="card">
+          <h3>corridas totales</h3>
+          <div class="value" id="svc-runs">-</div>
+          <small>Histórico del servicio</small>
+        </div>
+        <div class="card">
+          <h3>tickets monitorizados</h3>
+          <div class="value" id="svc-tickets">-</div>
+          <small>Con alguna regla disparada</small>
+        </div>
+        <div class="card">
+          <h3>alertas hoy</h3>
+          <div class="value" id="svc-alerts">-</div>
+          <small>Notificaciones del día</small>
+        </div>
+        <div class="card">
+          <h3>última corrida</h3>
+          <div class="value" id="svc-last-run">-</div>
+          <small>UTC</small>
+        </div>
+      </section>
+      <section class="chart-card">
+        <h3>Tickets procesados por corrida</h3>
+        <canvas id="svc-runs-chart" height="120"></canvas>
+      </section>
+      <table id="svc-runs-table">
+        <thead>
+          <tr>
+            <th>Inicio</th>
+            <th>Fin</th>
+            <th>Tickets</th>
+            <th>Alertas</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <script>
+      async function loadServiceData() {
+        try {
+          const response = await fetch("/dashboard/data");
+          if (!response.ok) throw new Error("No se pudo obtener la data");
+          const data = await response.json();
+          renderServiceSummary(data);
+          renderServiceChart(data);
+          renderRunsTable(data);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function renderServiceSummary(data) {
+        const summary = data.summary || {};
+        document.getElementById("service-last-updated").textContent =
+          "Actualizado: " + formatDate(data.refreshed_at);
+        document.getElementById("svc-runs").textContent = summary.runs ?? 0;
+        document.getElementById("svc-tickets").textContent = summary.tickets_monitored ?? 0;
+        document.getElementById("svc-alerts").textContent = summary.alerts_today ?? 0;
+        document.getElementById("svc-last-run").textContent = formatDate(summary.last_run_finished_at);
+      }
+
+      function renderServiceChart(data) {
+        const ctx = document.getElementById("svc-runs-chart");
+        if (!ctx) return;
+        const runs = data.runs || [];
+        const labels = runs.map((item) => formatDate(item.fecha_inicio));
+        const values = runs.map((item) => item.tickets || 0);
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Tickets procesados",
+                data: values,
+                fill: true,
+                borderColor: "#4f46e5",
+                backgroundColor: "rgba(79,70,229,0.15)",
+                tension: 0.35,
+                pointRadius: 4,
+                pointBackgroundColor: "#4f46e5",
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          },
+        });
+      }
+
+      function renderRunsTable(data) {
+        const tbody = document.querySelector("#svc-runs-table tbody");
+        tbody.innerHTML = "";
+        (data.runs || []).forEach((run) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${formatDate(run.fecha_inicio)}</td>
+            <td>${formatDate(run.fecha_fin)}</td>
+            <td>${run.tickets ?? "-"}</td>
+            <td>${run.alertas ?? "-"}</td>
+            <td class="${run.estado === "ok" ? "status-ok" : ""}">${run.estado || "-"}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function formatDate(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString("es-PE", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", loadServiceData);
     </script>
   </body>
 </html>
