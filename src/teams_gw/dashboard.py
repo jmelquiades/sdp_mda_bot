@@ -922,12 +922,16 @@ function prettifyLevel(level) {
         }
         const rows = items
           .map((item) => {
+            const link = item.ticket_link
+              ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>`
+              : "-";
             return `
               <tr>
                 <td>#${item.ticket_id || "-"}</td>
-                <td>${item.technician_id || "-"}</td>
+                <td>${item.technician || item.technician_id || "-"}</td>
                 <td>${item.subject || "-"}</td>
-                <td>${formatDate(item.sent_at)}</td>
+                <td>${formatDate(item.assigned_at || item.sent_at)}</td>
+                <td>${link}</td>
               </tr>
             `;
           })
@@ -940,6 +944,7 @@ function prettifyLevel(level) {
                 <th>Técnico</th>
                 <th>Asunto</th>
                 <th>Fecha/Hora (Asig. sin avance)</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
