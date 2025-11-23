@@ -626,7 +626,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = roleKey === "supervisor" ? "" : buildInsightsHtml(roleKey, insights);
-        const snapshotHtml = "";
+        const snapshotHtml = roleKey === "supervisor" ? buildSnapshotHtml(state.data.snapshot || {}, false) : "";
         const levels = roleData.levels
           .map((lvl, idx) => {
             const tag = roleKey === "supervisor" && idx === 0 ? "A2" : roleKey === "supervisor" && idx === 1 ? "A3" : "";
@@ -723,7 +723,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         `;
       }
 
-      function buildSnapshotHtml(snapshot) {
+      function buildSnapshotHtml(snapshot, includeExtras = true) {
         if (!snapshot || (!snapshot.unmoved && !snapshot.at_risk_active && !snapshot.at_risk_pause)) {
           return "";
         }
@@ -776,6 +776,27 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             `,
             )
             .join("") || "<tr><td colspan='5' class='empty-state'>Sin tickets próximos (pausa).</td></tr>";
+
+        if (!includeExtras) {
+          return `
+            <div class="insight-card">
+              <h3>Tickets sin moverse (asignación) <span class="tag">A7</span></h3>
+              <p>${unmoved.count || 0} tickets sin cambios desde la asignación.</p>
+              <table class="risk-table">
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Técnico</th>
+                    <th>Asunto</th>
+                    <th>Asignado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${unmovedRows}</tbody>
+              </table>
+            </div>
+          `;
+        }
 
         return `
           <div class="insights-grid">
