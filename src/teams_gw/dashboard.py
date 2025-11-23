@@ -103,6 +103,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
                 ratio_val = 0.0
             if 0.75 <= ratio_val < 1:
                 at_risk_near.append(item)
+    role_panels = raw.get("role_panels") or {}
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -152,6 +153,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "fired_reminders": fired_reminders,
         "snapshot": snapshot,
         "at_risk_near": at_risk_near,
+        "role_panels": role_panels,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -622,41 +624,62 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
           return;
         }
-        const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { count: 0, items: [] };
-        const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
-        const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
-        const insightsHtml = roleKey === "supervisor" ? "" : buildInsightsHtml(roleKey, insights);
-        const snapshotHtml = "";
-        const levels = roleData.levels
-          .map((lvl, idx) => {
-            const tag = roleKey === "supervisor" && idx === 0 ? "A2" : roleKey === "supervisor" && idx === 1 ? "A3" : "";
-            const tagHtml = tag ? `<span class="tag">${tag}</span>` : "";
-            return `
-              <div class="level-card">
-                ${tagHtml}
-                <h4>${lvl.label}</h4>
-                <div class="count">${lvl.count}</div>
+        if (roleKey === "supervisor") {
+          const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { count: 0, items: [] };
+          const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
+          const levels = roleData.levels
+            .map((lvl, idx) => {
+              const tag = idx === 0 ? "A2" : idx === 1 ? "A3" : "";
+              const tagHtml = tag ? `<span class="tag">${tag}</span>` : "";
+              return `
+                <div class="level-card">
+                  ${tagHtml}
+                  <h4>${lvl.label}</h4>
+                  <div class="count">${lvl.count}</div>
+                </div>
+              `;
+            })
+            .join("");
+          container.innerHTML = `
+            <div class="role-panel">
+              <div class="role-header" style="border-color: ${roleData.color};">
+                <div>
+                  <h2>${roleData.label} <span class="tag">A1</span></h2>
+                  <p>${roleData.description}</p>
+                </div>
+                <div class="role-kpi">
+                  <div class="number">${assignedSnapshot.count || 0}</div>
+                  <div class="muted">Tickets sin moverse</div>
+                </div>
               </div>
-            `;
-          })
-          .join("");
+              <div class="level-grid">${levels}</div>
+              ${buildNotificationSection(roleKey, roleData.notifications || [], atRiskNear)}
+            </div>
+          `;
+          return;
+        }
+
+        const panelData = state.data && state.data.role_panels ? state.data.role_panels[roleKey] : null;
+        const fired = (panelData && panelData.fired) || [];
+        const nearNext = (panelData && panelData.near_next) || [];
         container.innerHTML = `
           <div class="role-panel">
             <div class="role-header" style="border-color: ${roleData.color};">
               <div>
-                <h2>${roleData.label} <span class="tag">A1</span></h2>
+                <h2>${roleData.label}</h2>
                 <p>${roleData.description}</p>
               </div>
-              <div class="role-kpi">
-                <div class="number">${roleKey === "supervisor" ? (assignedSnapshot.count || 0) : roleData.total_alerts}</div>
-                <div class="muted">${roleKey === "supervisor" ? "Tickets sin moverse" : "Alertas vigentes"}</div>
-                ${roleKey === "supervisor" ? "" : "<div class='hint'>Incluye recordatorios y escalaciones activas</div>"}
+            </div>
+            <div class="notification-grid">
+              <div class="notification-card">
+                <h3>Disparados en última corrida</h3>
+                ${renderFiredReminders(fired)}
+              </div>
+              <div class="notification-card">
+                <h3>Próximos al siguiente nivel</h3>
+                ${renderAtRiskDetail(nearNext)}
               </div>
             </div>
-            <div class="level-grid">${levels}</div>
-            ${buildNotificationSection(roleKey, roleData.notifications || [], atRiskNear)}
-            ${insightsHtml}
-            ${snapshotHtml}
           </div>
         `;
       }
