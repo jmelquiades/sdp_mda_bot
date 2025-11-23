@@ -47,6 +47,27 @@ ROLE_META = {
     },
 }
 
+LEVEL_LABELS = {
+    "recordatorio_tecnico": "Recordatorio al Analista",
+    "escalamiento_supervisor": "Escalamiento al Supervisor",
+    "escalamiento_al_supervisor": "Escalamiento al Supervisor",
+    "escalamiento": "Escalamiento al Supervisor",
+    "escalamiento_supervisor_mesa": "Escalamiento al Supervisor",
+    "escalamiento supervisor": "Escalamiento al Supervisor",
+    "escalamiento supervisor mesa": "Escalamiento al Supervisor",
+    "escalamiento supervisor_mesa": "Escalamiento al Supervisor",
+    "escalamiento_supervisor_mesa": "Escalamiento al Supervisor",
+    "Escalamiento_Supervisor": "Escalamiento al Supervisor",
+    "alerta_jefe_operacion": "Alerta Jefe de Operaciones",
+    "alerta_jefe_servicios": "Alerta Jefe de Servicios",
+    "alerta_gerencia": "Alerta Gerencia",
+    "pausa_cliente_supervisor": "Pausa por Cliente (Supervisor)",
+    "pausa_cliente_jefe": "Pausa por cliente (Jefe de Operaciones)",
+    "pausa_proveedor_supervisor": "Pausa por Proveedor (Supervisor)",
+    "pausa_proveedor_jefe": "Pausa por Proveedor (Jefe de operaciones)",
+    "pausa_interna_supervisor": "Pausa Interna (Supervisor)",
+}
+
 
 def normalize_roles(config_value: str) -> List[str]:
     roles = [item.strip() for item in (config_value or "").split(",") if item.strip()]
@@ -601,11 +622,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         `;
       }
 
-      function buildNotificationSection(roleKey, notifications) {
-        if (!notifications.length) {
-          return "<div class='empty-state'>Sin alertas recientes.</div>";
-        }
-        if (roleKey === "supervisor") {
+function buildNotificationSection(roleKey, notifications) {
+  if (!notifications.length) {
+    return "<div class='empty-state'>Sin alertas recientes.</div>";
+  }
+  if (roleKey === "supervisor") {
           const grouped = groupNotifications(notifications);
           return `
             <div class="notification-grid">
@@ -620,53 +641,63 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             </div>
           `;
         }
-        return renderNotificationTable(
-          notifications.map((item) => ({ ...item, category: classifyNotification(item.nivel) })),
-        );
-      }
+  return renderNotificationTable(
+    notifications.map((item) => ({
+      ...item,
+      category: classifyNotification(item.nivel),
+      display_level: prettifyLevel(item.nivel),
+    })),
+  );
+}
 
-      function groupNotifications(items) {
-        const grouped = { reminders: [], escalations: [] };
-        items.forEach((item) => {
-          const category = classifyNotification(item.nivel);
-          const enriched = { ...item, category };
-          if (category === "reminder") {
-            grouped.reminders.push(enriched);
-          } else if (category === "escalation") {
-            grouped.escalations.push(enriched);
-          }
+function groupNotifications(items) {
+  const grouped = { reminders: [], escalations: [] };
+  items.forEach((item) => {
+    const category = classifyNotification(item.nivel);
+    const enriched = { ...item, category, display_level: prettifyLevel(item.nivel) };
+    if (category === "reminder") {
+      grouped.reminders.push(enriched);
+    } else if (category === "escalation") {
+      grouped.escalations.push(enriched);
+    }
         });
         return grouped;
       }
 
-      function classifyNotification(level) {
-        const normalized = (level || "").toLowerCase();
-        if (normalized.includes("recordatorio")) return "reminder";
-        if (normalized.includes("escalamiento") || normalized.includes("alerta")) return "escalation";
-        return "other";
-      }
+function classifyNotification(level) {
+  const normalized = (level || "").toLowerCase();
+  if (normalized.includes("recordatorio")) return "reminder";
+  if (normalized.includes("escalamiento") || normalized.includes("alerta")) return "escalation";
+  return "other";
+}
 
-      function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.") {
-        if (!items.length) {
-          return `<div class='empty-state'>${emptyMessage}</div>`;
-        }
-        const rows = items
-          .map((item) => {
-            const badgeClass =
-              item.category === "reminder"
-                ? "badge reminder"
-                : item.category === "escalation"
-                ? "badge escalation"
-                : "badge";
-            return `
-              <tr>
-                <td>#${item.ticket_id || "-"}</td>
-                <td><span class="${badgeClass}">${item.nivel || "-"}</span></td>
-                <td>${item.canal || "-"}</td>
-                <td>${formatDate(item.fecha)}</td>
-              </tr>
-            `;
-          })
+function prettifyLevel(level) {
+  if (!level) return "-";
+  const key = level.toString().toLowerCase();
+  return LEVEL_LABELS[key] || level;
+}
+
+function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.") {
+  if (!items.length) {
+    return `<div class='empty-state'>${emptyMessage}</div>`;
+  }
+  const rows = items
+    .map((item) => {
+      const badgeClass =
+        item.category === "reminder"
+          ? "badge reminder"
+          : item.category === "escalation"
+          ? "badge escalation"
+          : "badge";
+      return `
+        <tr>
+          <td>#${item.ticket_id || "-"}</td>
+          <td><span class="${badgeClass}">${item.display_level || item.nivel || "-"}</span></td>
+          <td>${item.canal || "-"}</td>
+          <td>${formatDate(item.fecha)}</td>
+        </tr>
+      `;
+    })
           .join("");
         return `
           <table>
