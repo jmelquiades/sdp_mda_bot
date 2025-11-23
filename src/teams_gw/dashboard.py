@@ -525,11 +525,15 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         if (!value) return "-";
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
-        return date.toLocaleString("es-PE", {
-          dateStyle: "medium",
-          timeStyle: "short",
-          timeZone: "America/Lima",
-        });
+        try {
+          return date.toLocaleString("es-PE", {
+            dateStyle: "medium",
+            timeStyle: "short",
+            timeZone: "America/Lima",
+          });
+        } catch (e) {
+          return date.toLocaleString("es-PE", { dateStyle: "medium", timeStyle: "short" });
+        }
       }
 
       function setText(id, value) {
