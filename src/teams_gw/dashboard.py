@@ -91,6 +91,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     backlog_delta = raw.get("backlog_delta") or {}
     active_reminders = raw.get("active_reminders") or []
     fired_reminders = raw.get("fired_reminders") or {"count": 0, "items": []}
+    snapshot = raw.get("snapshot") or {}
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -136,6 +137,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "backlog": backlog_delta,
         "active_reminders": active_reminders,
         "fired_reminders": fired_reminders,
+        "snapshot": snapshot,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -617,6 +619,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = buildInsightsHtml(roleKey, insights);
+        const snapshotHtml = roleKey === "supervisor" ? buildSnapshotHtml(state.data.snapshot || {}) : "";
         const levels = roleData.levels
           .map(
             (lvl) => `
@@ -643,6 +646,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <div class="level-grid">${levels}</div>
             ${buildNotificationSection(roleKey, roleData.notifications || [])}
             ${insightsHtml}
+            ${snapshotHtml}
           </div>
         `;
       }
@@ -704,6 +708,117 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               <div class="chip-list">${chipList}</div>
               <p><strong>${reminders.total || 0}</strong> recordatorios hoy (${reminders.tickets || 0} tickets).</p>
               <p>Último envío: ${lastSent}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      function buildSnapshotHtml(snapshot) {
+        if (!snapshot || (!snapshot.unmoved && !snapshot.at_risk_active && !snapshot.at_risk_pause)) {
+          return "";
+        }
+        const lastRun = snapshot.last_run ? formatDate(snapshot.last_run) : "Sin corrida";
+        const unmoved = snapshot.unmoved || { count: 0, items: [] };
+        const atRiskActive = snapshot.at_risk_active || [];
+        const atRiskPause = snapshot.at_risk_pause || [];
+
+        const unmovedRows =
+          (unmoved.items || [])
+            .map(
+              (item) => `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td>${item.technician || "-"}</td>
+                <td>${item.subject || "-"}</td>
+                <td>${formatDate(item.assigned_at || item.created_at)}</td>
+                <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+              </tr>
+            `,
+            )
+            .join("") || "<tr><td colspan='5' class='empty-state'>Sin tickets detenidos.</td></tr>";
+
+        const atRiskActiveRows =
+          atRiskActive
+            .map(
+              (item) => `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td>${item.technician || "-"}</td>
+                <td>${item.subject || "-"}</td>
+                <td>${Math.round((item.ratio || 0) * 100)}%</td>
+                <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+              </tr>
+            `,
+            )
+            .join("") || "<tr><td colspan='5' class='empty-state'>Sin tickets próximos (activos).</td></tr>";
+
+        const atRiskPauseRows =
+          atRiskPause
+            .map(
+              (item) => `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td>${item.technician || "-"}</td>
+                <td>${item.subject || "-"}</td>
+                <td>${Math.round((item.ratio || 0) * 100)}%</td>
+                <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+              </tr>
+            `,
+            )
+            .join("") || "<tr><td colspan='5' class='empty-state'>Sin tickets próximos (pausa).</td></tr>";
+
+        return `
+          <div class="insights-grid">
+            <div class="insight-card">
+              <h3>Última verificación</h3>
+              <p>Fecha y hora de la última corrida</p>
+              <p><strong>${lastRun}</strong></p>
+            </div>
+            <div class="insight-card">
+              <h3>Tickets sin moverse (asignación)</h3>
+              <p>${unmoved.count || 0} tickets sin cambios desde la asignación.</p>
+              <table class="risk-table">
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Técnico</th>
+                    <th>Asunto</th>
+                    <th>Asignado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${unmovedRows}</tbody>
+              </table>
+            </div>
+            <div class="insight-card">
+              <h3>Próximos a escalar (activos)</h3>
+              <table class="risk-table">
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Técnico</th>
+                    <th>Asunto</th>
+                    <th>Progreso</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${atRiskActiveRows}</tbody>
+              </table>
+            </div>
+            <div class="insight-card">
+              <h3>Próximos a escalar (pausa)</h3>
+              <table class="risk-table">
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Técnico</th>
+                    <th>Asunto</th>
+                    <th>Progreso</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${atRiskPauseRows}</tbody>
+              </table>
             </div>
           </div>
         `;
