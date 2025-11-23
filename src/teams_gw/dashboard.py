@@ -14,7 +14,7 @@ ROLE_META = {
         "color": "#2563eb",
         "levels": [
             {"key": "recordatorio_tecnico", "label": "Tickets sin moverse"},
-            {"key": "Escalamiento_Supervisor", "label": "Escalaciones activas"},
+            {"key": "Escalamiento_Supervisor", "label": "Tickets próximos a escalar"},
         ],
         "notification_roles": ["tecnico", "supervisor_mesa"],
     },
@@ -93,6 +93,16 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     fired_reminders = raw.get("fired_reminders") or {"count": 0, "items": []}
     snapshot = raw.get("snapshot") or {}
     assigned_snapshot = snapshot.get("assigned") if isinstance(snapshot, dict) else {}
+    at_risk_near: List[Dict[str, Any]] = []
+    if isinstance(snapshot, dict):
+        combined = (snapshot.get("at_risk_active") or []) + (snapshot.get("at_risk_pause") or [])
+        for item in combined:
+            try:
+                ratio_val = float(item.get("ratio", 0) or 0)
+            except (TypeError, ValueError):
+                ratio_val = 0.0
+            if ratio_val >= 0.75:
+                at_risk_near.append(item)
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -105,6 +115,8 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
             # Override recordatorio_tecnico count with assigned_snapshot.count if available
             if level["key"] == "recordatorio_tecnico":
                 count = int(assigned_snapshot.get("count", 0) or 0)
+            elif level["key"] == "Escalamiento_Supervisor":
+                count = len(at_risk_near)
             else:
                 count = int(levels.get(level["key"], 0) or 0)
             level_entries.append({"key": level["key"], "label": level["label"], "count": count})
@@ -139,6 +151,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "active_reminders": active_reminders,
         "fired_reminders": fired_reminders,
         "snapshot": snapshot,
+        "at_risk_near": at_risk_near,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -610,19 +623,22 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           return;
         }
         const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { count: 0, items: [] };
+        const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = buildInsightsHtml(roleKey, insights);
         const snapshotHtml = roleKey === "supervisor" ? buildSnapshotHtml(state.data.snapshot || {}) : "";
         const levels = roleData.levels
-          .map(
-            (lvl) => `
-            <div class="level-card">
-              <span class="tag">A2</span>
-              <h4>${lvl.label}</h4>
-              <div class="count">${lvl.count}</div>
-            </div>
-          `,
-          )
+          .map((lvl, idx) => {
+            const tag = roleKey === "supervisor" && idx === 0 ? "A2" : roleKey === "supervisor" && idx === 1 ? "A3" : "";
+            const tagHtml = tag ? `<span class="tag">${tag}</span>` : "";
+            return `
+              <div class="level-card">
+                ${tagHtml}
+                <h4>${lvl.label}</h4>
+                <div class="count">${lvl.count}</div>
+              </div>
+            `;
+          })
           .join("");
         container.innerHTML = `
           <div class="role-panel">
@@ -638,7 +654,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               </div>
             </div>
             <div class="level-grid">${levels}</div>
-            ${buildNotificationSection(roleKey, roleData.notifications || [])}
+            ${buildNotificationSection(roleKey, roleData.notifications || [], atRiskNear)}
             ${insightsHtml}
             ${snapshotHtml}
           </div>
@@ -818,7 +834,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         `;
       }
 
-      function buildNotificationSection(roleKey, notifications) {
+      function buildNotificationSection(roleKey, notifications, atRiskNear = []) {
         if (!notifications.length) {
           return "<div class='empty-state'>Sin alertas recientes.</div>";
         }
@@ -833,8 +849,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 ${renderFiredReminders(assignedSnapshot.items || [])}
               </div>
               <div class="notification-card">
-                <h3>Recordatorios repetidos <span class="tag">A9</span></h3>
-                ${renderAggregatedReminders(repeatedReminders)}
+                <h3>Tickets próximos a escalar <span class="tag">A9</span></h3>
+                ${renderAtRiskDetail(atRiskNear)}
               </div>
             </div>
           `;
@@ -940,6 +956,44 @@ function prettifyLevel(level) {
                 <th>Técnico</th>
                 <th>Asunto</th>
                 <th>Fecha/Hora (Asig. sin avance)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      function renderAtRiskDetail(items) {
+        if (!items.length) {
+          return "<div class='empty-state'>Sin tickets próximos a escalar.</div>";
+        }
+        const rows = items
+          .map((item) => {
+            const ratio = Math.round((item.ratio || 0) * 100);
+            const badgeClass = ratio >= 90 ? "badge escalation" : ratio >= 75 ? "badge reminder" : "badge";
+            const link = item.ticket_link
+              ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>`
+              : "-";
+            return `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td>${item.technician || "-"}</td>
+                <td>${item.subject || "-"}</td>
+                <td><span class="${badgeClass}">${ratio}%</span></td>
+                <td>${link}</td>
+              </tr>
+            `;
+          })
+          .join("");
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Técnico</th>
+                <th>Asunto</th>
+                <th>Progreso</th>
                 <th></th>
               </tr>
             </thead>
