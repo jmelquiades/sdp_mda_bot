@@ -90,6 +90,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     role_insights = raw.get("role_insights") or {}
     backlog_delta = raw.get("backlog_delta") or {}
     active_reminders = raw.get("active_reminders") or []
+    fired_reminders = raw.get("fired_reminders") or {"count": 0, "items": []}
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -99,7 +100,11 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         level_entries = []
         total_alerts = 0
         for level in meta["levels"]:
-            count = int(levels.get(level["key"], 0) or 0)
+            # Override recordatorio_tecnico count with fired_reminders.count if available
+            if level["key"] == "recordatorio_tecnico":
+                count = int(fired_reminders.get("count", 0) or 0)
+            else:
+                count = int(levels.get(level["key"], 0) or 0)
             level_entries.append({"key": level["key"], "label": level["label"], "count": count})
             total_alerts += count
         role_notifications = [
@@ -130,6 +135,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "insights": role_insights,
         "backlog": backlog_delta,
         "active_reminders": active_reminders,
+        "fired_reminders": fired_reminders,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -710,12 +716,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         if (roleKey === "supervisor") {
           const grouped = groupNotifications(notifications);
           const repeatedReminders = aggregateRepeatedReminders(grouped.reminders);
-          const activeReminders = (state.data && state.data.active_reminders) || [];
+          const firedReminders = (state.data && state.data.fired_reminders) || { items: [] };
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Recordatorios activos</h3>
-                ${renderActiveReminders(activeReminders)}
+                <h3>Recordatorios disparados</h3>
+                ${renderFiredReminders(firedReminders.items || [])}
               </div>
               <div class="notification-card">
                 <h3>Detalle de escalaciones</h3>
@@ -801,22 +807,18 @@ function prettifyLevel(level) {
         `;
       }
 
-      function renderActiveReminders(items) {
+      function renderFiredReminders(items) {
         if (!items.length) {
-          return "<div class='empty-state'>No hay recordatorios activos.</div>";
+          return "<div class='empty-state'>No hay recordatorios disparados.</div>";
         }
         const rows = items
           .map((item) => {
             return `
               <tr>
                 <td>#${item.ticket_id || "-"}</td>
-                <td>${item.subject || "-"}</td>
-                <td>${item.requester || "-"}</td>
                 <td>${item.technician_id || "-"}</td>
-                <td>${item.priority || "-"}</td>
-                <td>${item.assigned_active_days != null ? item.assigned_active_days : "-"}</td>
-                <td>${formatDate(item.assigned_at || item.created_at)}</td>
-                <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+                <td>${item.subject || "-"}</td>
+                <td>${formatDate(item.sent_at)}</td>
               </tr>
             `;
           })
@@ -826,13 +828,9 @@ function prettifyLevel(level) {
             <thead>
               <tr>
                 <th>Ticket</th>
-                <th>Asunto</th>
-                <th>Solicitante</th>
                 <th>Técnico</th>
-                <th>Prioridad</th>
-                <th>Días desde asignación</th>
-                <th>Asignado</th>
-                <th></th>
+                <th>Asunto</th>
+                <th>Fecha/Hora regla</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
