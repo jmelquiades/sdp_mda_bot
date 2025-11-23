@@ -13,7 +13,7 @@ ROLE_META = {
         "description": "Visibilidad de recordatorios al técnico y escalaciones iniciales.",
         "color": "#2563eb",
         "levels": [
-            {"key": "recordatorio_tecnico", "label": "Recordatorios a técnicos"},
+            {"key": "recordatorio_tecnico", "label": "Recordatorios disparados"},
             {"key": "Escalamiento_Supervisor", "label": "Escalaciones activas"},
         ],
         "notification_roles": ["tecnico", "supervisor_mesa"],
