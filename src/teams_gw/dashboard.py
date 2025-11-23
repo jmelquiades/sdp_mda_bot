@@ -531,9 +531,17 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           const payload = await response.json();
           state.data = payload;
           setText("last-updated", "Actualizado: " + formatDate(state.data.refreshed_at));
-          renderBacklogTrend(state.data.backlog);
-          renderTabs();
-          renderRole(state.activeRole);
+          try {
+            renderBacklogTrend(state.data.backlog);
+          } catch (e) {
+            console.error("Error rendering backlog trend", e);
+          }
+          try {
+            renderTabs();
+            renderRole(state.activeRole);
+          } catch (e) {
+            console.error("Error rendering role panel", e);
+          }
         } catch (err) {
           console.error(err);
           const panel = document.getElementById("role-panel");
