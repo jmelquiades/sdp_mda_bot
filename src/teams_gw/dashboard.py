@@ -539,8 +539,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               </div>
             </div>
             <div class="level-grid">${levels}</div>
-            ${insightsHtml}
             ${buildNotificationSection(roleKey, roleData.notifications || [])}
+            ${insightsHtml}
           </div>
         `;
       }
@@ -610,11 +610,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Recordatorios vigentes</h3>
+                <h3>Detalle de recordatorios</h3>
                 ${renderNotificationTable(grouped.reminders, "Sin recordatorios vigentes.")}
               </div>
               <div class="notification-card">
-                <h3>Escalaciones activas</h3>
+                <h3>Detalle de escalaciones</h3>
                 ${renderNotificationTable(grouped.escalations, "Sin escalaciones activas.")}
               </div>
             </div>
