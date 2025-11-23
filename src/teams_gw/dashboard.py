@@ -138,7 +138,10 @@ def render_dashboard_html(roles: List[str]) -> HTMLResponse:
         "labels": {key: ROLE_META[key]["label"] for key in roles if key in ROLE_META},
         "colors": {key: ROLE_META[key]["color"] for key in roles if key in ROLE_META},
     }
-    html = DASHBOARD_TEMPLATE.replace("__DASHBOARD_CONFIG__", json.dumps(config))
+    html = (
+        DASHBOARD_TEMPLATE.replace("__DASHBOARD_CONFIG__", json.dumps(config))
+        .replace("__LEVEL_LABELS__", json.dumps(LEVEL_LABELS))
+    )
     return HTMLResponse(html)
 
 
@@ -503,6 +506,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     </div>
     <script>
       const DASHBOARD_CONFIG = __DASHBOARD_CONFIG__;
+      const LEVEL_LABELS = __LEVEL_LABELS__;
       const state = {
         data: null,
         activeRole: DASHBOARD_CONFIG.roles[0] || null,
