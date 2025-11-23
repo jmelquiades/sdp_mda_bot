@@ -101,7 +101,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
                 ratio_val = float(item.get("ratio", 0) or 0)
             except (TypeError, ValueError):
                 ratio_val = 0.0
-            if ratio_val >= 0.75:
+            if 0.75 <= ratio_val < 1:
                 at_risk_near.append(item)
 
     roles_payload: Dict[str, Any] = {}
