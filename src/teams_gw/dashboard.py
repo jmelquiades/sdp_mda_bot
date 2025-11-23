@@ -280,6 +280,24 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-weight: 600;
         color: #0f172a;
       }
+      .notification-grid {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .notification-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 16px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+      }
+      .notification-card h3 {
+        margin: 0 0 8px;
+        font-size: 17px;
+        color: #0f172a;
+      }
       .insights-grid {
         margin-top: 24px;
         display: grid;
@@ -380,6 +398,14 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-size: 12px;
         background: #e2e8f0;
         color: #475569;
+      }
+      .badge.reminder {
+        background: rgba(59, 130, 246, 0.15);
+        color: #1d4ed8;
+      }
+      .badge.escalation {
+        background: rgba(248, 113, 113, 0.2);
+        color: #b91c1c;
       }
       .empty-state {
         padding: 24px;
@@ -500,19 +526,6 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           `,
           )
           .join("");
-        const rows =
-          (roleData.notifications || [])
-            .map(
-              (item) => `
-            <tr>
-              <td>#${item.ticket_id || "-"}</td>
-              <td><span class="badge">${item.nivel || "-"}</span></td>
-              <td>${item.canal || "-"}</td>
-              <td>${formatDate(item.fecha)}</td>
-            </tr>
-          `,
-            )
-            .join("") || "<tr><td colspan='4' class='empty-state'>Sin alertas recientes.</td></tr>";
         container.innerHTML = `
           <div class="role-panel">
             <div class="role-header" style="border-color: ${roleData.color};">
@@ -527,17 +540,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             </div>
             <div class="level-grid">${levels}</div>
             ${insightsHtml}
-            <table>
-              <thead>
-                <tr>
-                  <th>Ticket</th>
-                  <th>Nivel</th>
-                  <th>Canal</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
+            ${buildNotificationSection(roleKey, roleData.notifications || [])}
           </div>
         `;
       }
@@ -595,6 +598,88 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               <p>Último envío: ${lastSent}</p>
             </div>
           </div>
+        `;
+      }
+
+      function buildNotificationSection(roleKey, notifications) {
+        if (!notifications.length) {
+          return "<div class='empty-state'>Sin alertas recientes.</div>";
+        }
+        if (roleKey === "supervisor") {
+          const grouped = groupNotifications(notifications);
+          return `
+            <div class="notification-grid">
+              <div class="notification-card">
+                <h3>Recordatorios vigentes</h3>
+                ${renderNotificationTable(grouped.reminders, "Sin recordatorios vigentes.")}
+              </div>
+              <div class="notification-card">
+                <h3>Escalaciones activas</h3>
+                ${renderNotificationTable(grouped.escalations, "Sin escalaciones activas.")}
+              </div>
+            </div>
+          `;
+        }
+        return renderNotificationTable(
+          notifications.map((item) => ({ ...item, category: classifyNotification(item.nivel) })),
+        );
+      }
+
+      function groupNotifications(items) {
+        const grouped = { reminders: [], escalations: [] };
+        items.forEach((item) => {
+          const category = classifyNotification(item.nivel);
+          const enriched = { ...item, category };
+          if (category === "reminder") {
+            grouped.reminders.push(enriched);
+          } else if (category === "escalation") {
+            grouped.escalations.push(enriched);
+          }
+        });
+        return grouped;
+      }
+
+      function classifyNotification(level) {
+        const normalized = (level || "").toLowerCase();
+        if (normalized.includes("recordatorio")) return "reminder";
+        if (normalized.includes("escalamiento") || normalized.includes("alerta")) return "escalation";
+        return "other";
+      }
+
+      function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.") {
+        if (!items.length) {
+          return `<div class='empty-state'>${emptyMessage}</div>`;
+        }
+        const rows = items
+          .map((item) => {
+            const badgeClass =
+              item.category === "reminder"
+                ? "badge reminder"
+                : item.category === "escalation"
+                ? "badge escalation"
+                : "badge";
+            return `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td><span class="${badgeClass}">${item.nivel || "-"}</span></td>
+                <td>${item.canal || "-"}</td>
+                <td>${formatDate(item.fecha)}</td>
+              </tr>
+            `;
+          })
+          .join("");
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Nivel</th>
+                <th>Canal</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
         `;
       }
 
