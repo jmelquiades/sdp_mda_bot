@@ -313,6 +313,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         font-size: 36px;
         font-weight: 600;
       }
+      .role-kpi .hint {
+        font-size: 12px;
+        color: #94a3b8;
+      }
       .level-grid {
         margin-top: 20px;
         display: grid;
@@ -625,6 +629,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               <div class="role-kpi">
                 <div class="number">${roleData.total_alerts}</div>
                 <div class="muted">Alertas vigentes</div>
+                <div class="hint">Incluye recordatorios y escalaciones activas</div>
               </div>
             </div>
             <div class="level-grid">${levels}</div>
@@ -648,6 +653,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               return `
                 <tr>
                   <td>#${item.ticket_id}</td>
+                  <td>${formatDate(item.created_at)}</td>
+                  <td>${item.requester || "-"}</td>
+                  <td>${item.technician || "-"}</td>
                   <td>${item.priority || "-"}</td>
                   <td>${item.active_days} / ${item.threshold_days} días</td>
                   <td><span class="${pillClass}">${Math.round(item.ratio * 100)}%</span></td>
@@ -655,7 +663,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 </tr>
               `;
             })
-            .join("") || "<tr><td colspan='5' class='empty-state'>Sin tickets cerca al umbral.</td></tr>";
+            .join("") || "<tr><td colspan='7' class='empty-state'>Sin tickets cerca al umbral.</td></tr>";
         const chipList =
           (insights.priority_breakdown || [])
             .map((item) => `<span class="chip"><span>${item.label}</span><strong>${item.count}</strong></span>`)
@@ -671,6 +679,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 <thead>
                   <tr>
                     <th>Ticket</th>
+                    <th>Creado</th>
+                    <th>Solicitante</th>
+                    <th>Técnico</th>
                     <th>Prioridad</th>
                     <th>Días activos</th>
                     <th>Progreso</th>
