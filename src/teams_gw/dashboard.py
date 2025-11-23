@@ -544,10 +544,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           }
         } catch (err) {
           console.error(err);
-          const panel = document.getElementById("role-panel");
-          if (panel) {
-            panel.innerHTML =
-              "<div class='role-panel'><div class='empty-state'>No pudimos cargar la información del controller.</div></div>";
+          if (!state.data) {
+            const panel = document.getElementById("role-panel");
+            if (panel) {
+              panel.innerHTML =
+                "<div class='role-panel'><div class='empty-state'>No pudimos cargar la información del controller.</div></div>";
+            }
           }
         }
       }
