@@ -625,7 +625,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { count: 0, items: [] };
         const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
-        const insightsHtml = buildInsightsHtml(roleKey, insights);
+        const insightsHtml = roleKey === "supervisor" ? "" : buildInsightsHtml(roleKey, insights);
         const snapshotHtml = "";
         const levels = roleData.levels
           .map((lvl, idx) => {
