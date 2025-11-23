@@ -626,7 +626,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = roleKey === "supervisor" ? "" : buildInsightsHtml(roleKey, insights);
-        const snapshotHtml = roleKey === "supervisor" ? buildSnapshotHtml(state.data.snapshot || {}, false) : "";
+        const snapshotHtml = "";
         const levels = roleData.levels
           .map((lvl, idx) => {
             const tag = roleKey === "supervisor" && idx === 0 ? "A2" : roleKey === "supervisor" && idx === 1 ? "A3" : "";
