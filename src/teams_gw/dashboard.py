@@ -89,6 +89,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     summary = raw.get("summary") or {}
     role_insights = raw.get("role_insights") or {}
     backlog_delta = raw.get("backlog_delta") or {}
+    active_reminders = raw.get("active_reminders") or []
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -128,6 +129,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "runs": runs,
         "insights": role_insights,
         "backlog": backlog_delta,
+        "active_reminders": active_reminders,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -708,11 +710,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         if (roleKey === "supervisor") {
           const grouped = groupNotifications(notifications);
           const repeatedReminders = aggregateRepeatedReminders(grouped.reminders);
+          const activeReminders = (state.data && state.data.active_reminders) || [];
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Detalle de recordatorios</h3>
-                ${renderNotificationTable(grouped.reminders, "Sin recordatorios vigentes.")}
+                <h3>Recordatorios activos</h3>
+                ${renderActiveReminders(activeReminders)}
               </div>
               <div class="notification-card">
                 <h3>Detalle de escalaciones</h3>
@@ -727,9 +730,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
         return renderNotificationTable(
           notifications.map((item) => ({
-      ...item,
-      category: classifyNotification(item.nivel),
-      display_level: prettifyLevel(item.nivel),
+            ...item,
+            category: classifyNotification(item.nivel),
+            display_level: prettifyLevel(item.nivel),
     })),
   );
 }
@@ -761,27 +764,27 @@ function prettifyLevel(level) {
   return LEVEL_LABELS[key] || level;
 }
 
-function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.") {
-  if (!items.length) {
-    return `<div class='empty-state'>${emptyMessage}</div>`;
-  }
-  const rows = items
-    .map((item) => {
-      const badgeClass =
-        item.category === "reminder"
-          ? "badge reminder"
-          : item.category === "escalation"
-          ? "badge escalation"
-          : "badge";
-      return `
-        <tr>
-          <td>#${item.ticket_id || "-"}</td>
-          <td><span class="${badgeClass}">${item.display_level || item.nivel || "-"}</span></td>
-          <td>${item.canal || "-"}</td>
-          <td>${formatDate(item.fecha)}</td>
-        </tr>
-      `;
-    })
+      function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.") {
+        if (!items.length) {
+          return `<div class='empty-state'>${emptyMessage}</div>`;
+        }
+        const rows = items
+          .map((item) => {
+            const badgeClass =
+              item.category === "reminder"
+                ? "badge reminder"
+                : item.category === "escalation"
+                ? "badge escalation"
+                : "badge";
+            return `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td><span class="${badgeClass}">${item.display_level || item.nivel || "-"}</span></td>
+                <td>${item.canal || "-"}</td>
+                <td>${formatDate(item.fecha)}</td>
+              </tr>
+            `;
+          })
           .join("");
         return `
           <table>
@@ -791,6 +794,45 @@ function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.")
                 <th>Nivel</th>
                 <th>Canal</th>
                 <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      function renderActiveReminders(items) {
+        if (!items.length) {
+          return "<div class='empty-state'>No hay recordatorios activos.</div>";
+        }
+        const rows = items
+          .map((item) => {
+            return `
+              <tr>
+                <td>#${item.ticket_id || "-"}</td>
+                <td>${item.subject || "-"}</td>
+                <td>${item.requester || "-"}</td>
+                <td>${item.technician_id || "-"}</td>
+                <td>${item.priority || "-"}</td>
+                <td>${item.assigned_active_days != null ? item.assigned_active_days : "-"}</td>
+                <td>${formatDate(item.assigned_at || item.created_at)}</td>
+                <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
+              </tr>
+            `;
+          })
+          .join("");
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Asunto</th>
+                <th>Solicitante</th>
+                <th>Técnico</th>
+                <th>Prioridad</th>
+                <th>Días desde asignación</th>
+                <th>Asignado</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
