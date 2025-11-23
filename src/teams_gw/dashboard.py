@@ -690,12 +690,13 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         `;
       }
 
-function buildNotificationSection(roleKey, notifications) {
-  if (!notifications.length) {
-    return "<div class='empty-state'>Sin alertas recientes.</div>";
-  }
-  if (roleKey === "supervisor") {
+      function buildNotificationSection(roleKey, notifications) {
+        if (!notifications.length) {
+          return "<div class='empty-state'>Sin alertas recientes.</div>";
+        }
+        if (roleKey === "supervisor") {
           const grouped = groupNotifications(notifications);
+          const repeatedReminders = aggregateRepeatedReminders(grouped.reminders);
           return `
             <div class="notification-grid">
               <div class="notification-card">
@@ -706,11 +707,15 @@ function buildNotificationSection(roleKey, notifications) {
                 <h3>Detalle de escalaciones</h3>
                 ${renderNotificationTable(grouped.escalations, "Sin escalaciones activas.")}
               </div>
+              <div class="notification-card">
+                <h3>Recordatorios repetidos</h3>
+                ${renderAggregatedReminders(repeatedReminders)}
+              </div>
             </div>
           `;
         }
-  return renderNotificationTable(
-    notifications.map((item) => ({
+        return renderNotificationTable(
+          notifications.map((item) => ({
       ...item,
       category: classifyNotification(item.nivel),
       display_level: prettifyLevel(item.nivel),
@@ -775,6 +780,50 @@ function renderNotificationTable(items, emptyMessage = "Sin alertas recientes.")
                 <th>Nivel</th>
                 <th>Canal</th>
                 <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      function aggregateRepeatedReminders(reminders) {
+        const counts = {};
+        reminders.forEach((item) => {
+          const key = item.ticket_id || "";
+          if (!key) return;
+          counts[key] = counts[key] || { ticket_id: key, count: 0, last: item.fecha, canal: item.canal };
+          counts[key].count += 1;
+          counts[key].last = item.fecha || counts[key].last;
+          counts[key].canal = item.canal || counts[key].canal;
+        });
+        return Object.values(counts).filter((entry) => entry.count > 1);
+      }
+
+      function renderAggregatedReminders(items) {
+        if (!items.length) {
+          return "<div class='empty-state'>Sin recordatorios repetidos.</div>";
+        }
+        const rows = items
+          .map(
+            (item) => `
+            <tr>
+              <td>#${item.ticket_id}</td>
+              <td>${item.count} envíos</td>
+              <td>${item.canal || "-"}</td>
+              <td>${formatDate(item.last)}</td>
+            </tr>
+          `,
+          )
+          .join("");
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Recordatorios</th>
+                <th>Último canal</th>
+                <th>Último envío</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
