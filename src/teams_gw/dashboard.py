@@ -616,6 +616,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           .map(
             (lvl) => `
             <div class="level-card">
+              <span class="tag">A2</span>
               <h4>${lvl.label}</h4>
               <div class="count">${lvl.count}</div>
             </div>
@@ -626,7 +627,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           <div class="role-panel">
             <div class="role-header" style="border-color: ${roleData.color};">
               <div>
-                <h2>${roleData.label}</h2>
+                <h2>${roleData.label} <span class="tag">A1</span></h2>
                 <p>${roleData.description}</p>
               </div>
               <div class="role-kpi">
@@ -677,7 +678,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         return `
           <div class="insights-grid">
             <div class="insight-card">
-              <h3>Próximos a escalar</h3>
+              <h3>Próximos a escalar <span class="tag">A3</span></h3>
               <p>Tickets que se acercan al umbral de escalamiento (${insights.threshold_days} días hábiles).</p>
               <table class="risk-table">
                 <thead>
@@ -696,7 +697,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               </table>
             </div>
             <div class="insight-card">
-              <h3>Prioridades y recordatorios</h3>
+              <h3>Prioridades y recordatorios <span class="tag">A4</span></h3>
               <div class="chip-list">${chipList}</div>
               <p><strong>${reminders.total || 0}</strong> recordatorios hoy (${reminders.tickets || 0} tickets).</p>
               <p>Último envío: ${lastSent}</p>
@@ -762,12 +763,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         return `
           <div class="insights-grid">
             <div class="insight-card">
-              <h3>Última verificación</h3>
+              <h3>Última verificación <span class="tag">A5</span></h3>
               <p>Fecha y hora de la última corrida</p>
               <p><strong>${lastRun}</strong></p>
             </div>
             <div class="insight-card">
-              <h3>Tickets sin moverse (asignación)</h3>
+              <h3>Tickets sin moverse (asignación) <span class="tag">A6</span></h3>
               <p>${unmoved.count || 0} tickets sin cambios desde la asignación.</p>
               <table class="risk-table">
                 <thead>
@@ -827,15 +828,15 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Tickets sin moverse (última corrida)</h3>
+                <h3>Tickets sin moverse (última corrida) <span class="tag">A7</span></h3>
                 ${renderFiredReminders(firedReminders.items || [])}
               </div>
               <div class="notification-card">
-                <h3>Detalle de escalaciones</h3>
+                <h3>Detalle de escalaciones <span class="tag">A8</span></h3>
                 ${renderNotificationTable(grouped.escalations, "Sin escalaciones activas.")}
               </div>
               <div class="notification-card">
-                <h3>Recordatorios repetidos</h3>
+                <h3>Recordatorios repetidos <span class="tag">A9</span></h3>
                 ${renderAggregatedReminders(repeatedReminders)}
               </div>
             </div>
