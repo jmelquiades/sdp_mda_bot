@@ -92,6 +92,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     active_reminders = raw.get("active_reminders") or []
     fired_reminders = raw.get("fired_reminders") or {"count": 0, "items": []}
     snapshot = raw.get("snapshot") or {}
+    assigned_snapshot = snapshot.get("assigned") if isinstance(snapshot, dict) else {}
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -101,9 +102,9 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         level_entries = []
         total_alerts = 0
         for level in meta["levels"]:
-            # Override recordatorio_tecnico count with fired_reminders.count if available
+            # Override recordatorio_tecnico count with assigned_snapshot.count if available
             if level["key"] == "recordatorio_tecnico":
-                count = int(fired_reminders.get("count", 0) or 0)
+                count = int(assigned_snapshot.get("count", 0) or 0)
             else:
                 count = int(levels.get(level["key"], 0) or 0)
             level_entries.append({"key": level["key"], "label": level["label"], "count": count})
@@ -608,7 +609,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
           return;
         }
-        const firedReminders = state.data && state.data.fired_reminders ? state.data.fired_reminders : { count: 0, items: [] };
+        const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { count: 0, items: [] };
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = buildInsightsHtml(roleKey, insights);
         const snapshotHtml = roleKey === "supervisor" ? buildSnapshotHtml(state.data.snapshot || {}) : "";
@@ -631,7 +632,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 <p>${roleData.description}</p>
               </div>
               <div class="role-kpi">
-                <div class="number">${roleKey === "supervisor" ? (firedReminders.count || 0) : roleData.total_alerts}</div>
+                <div class="number">${roleKey === "supervisor" ? (assignedSnapshot.count || 0) : roleData.total_alerts}</div>
                 <div class="muted">${roleKey === "supervisor" ? "Tickets sin moverse" : "Alertas vigentes"}</div>
                 ${roleKey === "supervisor" ? "" : "<div class='hint'>Incluye recordatorios y escalaciones activas</div>"}
               </div>
@@ -824,12 +825,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         if (roleKey === "supervisor") {
           const grouped = groupNotifications(notifications);
           const repeatedReminders = aggregateRepeatedReminders(grouped.reminders);
-          const firedReminders = (state.data && state.data.fired_reminders) || { items: [] };
+          const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { items: [] };
           return `
             <div class="notification-grid">
               <div class="notification-card">
                 <h3>Tickets sin moverse (última corrida) <span class="tag">A7</span></h3>
-                ${renderFiredReminders(firedReminders.items || [])}
+                ${renderFiredReminders(assignedSnapshot.items || [])}
               </div>
               <div class="notification-card">
                 <h3>Detalle de escalaciones <span class="tag">A8</span></h3>
