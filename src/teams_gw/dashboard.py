@@ -201,35 +201,29 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         margin: 0;
         color: #64748b;
       }
-      .trend-card {
-        background: #fff;
+      .last-check-card {
+        background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px 14px;
-        min-width: 180px;
-        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
-        text-align: right;
+        border-radius: 16px;
+        padding: 14px 16px;
+        min-width: 240px;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
       }
-      .trend-card .label {
-        color: #475569;
-        font-size: 13px;
+      .last-check-card h3 {
         margin: 0 0 4px;
-      }
-      .trend-card .value {
-        font-size: 28px;
-        font-weight: 700;
-        margin: 0;
+        font-size: 16px;
         color: #0f172a;
       }
-      .trend-card .delta {
+      .last-check-card p {
+        margin: 2px 0;
+        color: #475569;
         font-size: 13px;
-        font-weight: 600;
       }
-      .delta.up {
-        color: #059669;
-      }
-      .delta.down {
-        color: #dc2626;
+      .last-check-card .value {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
       }
       .summary-grid {
         display: grid;
@@ -507,10 +501,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           <h1>Backlog Dashboard</h1>
           <p id="last-updated">Actualizando…</p>
         </div>
-        <div class="trend-card" id="backlog-trend">
-          <p class="label">Alertas vigentes</p>
+        <div class="last-check-card" id="last-check-card">
+          <h3>Última verificación</h3>
+          <p>Fecha y hora de la última corrida</p>
           <p class="value">-</p>
-          <p class="delta muted">Sin dato previo</p>
         </div>
       </header>
       <section>
@@ -534,6 +528,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         return date.toLocaleString("es-PE", {
           dateStyle: "medium",
           timeStyle: "short",
+          timeZone: "America/Lima",
         });
       }
 
@@ -549,11 +544,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           const payload = await response.json();
           state.data = payload;
           setText("last-updated", "Actualizado: " + formatDate(state.data.refreshed_at));
-          try {
-            renderBacklogTrend(state.data.backlog);
-          } catch (e) {
-            console.error("Error rendering backlog trend", e);
-          }
+          renderLastCheck(state.data.snapshot);
           try {
             renderTabs();
             renderRole(state.activeRole);
@@ -593,20 +584,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         });
       }
 
-      function renderBacklogTrend(backlog) {
-        const container = document.getElementById("backlog-trend");
-        if (!container) return;
-        const current = backlog && typeof backlog.current === "number" ? backlog.current : 0;
-        const previous = backlog && typeof backlog.previous === "number" ? backlog.previous : 0;
-        const delta = backlog && typeof backlog.delta === "number" ? backlog.delta : 0;
-        const deltaClass = delta > 0 ? "delta up" : delta < 0 ? "delta down" : "delta muted";
-        const arrow = delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
-        container.querySelector(".value").textContent = current;
-        const deltaEl = container.querySelector(".delta");
-        if (deltaEl) {
-          deltaEl.textContent = previous === 0 ? "Sin dato previo" : `${delta}% ${arrow} vs última corrida`;
-          deltaEl.className = deltaClass;
-        }
+      function renderLastCheck(snapshot) {
+        const card = document.getElementById("last-check-card");
+        if (!card) return;
+        const last = snapshot && snapshot.last_run ? formatDate(snapshot.last_run) : "Sin corrida";
+        const valueEl = card.querySelector(".value");
+        if (valueEl) valueEl.textContent = last;
       }
 
       function renderRole(roleKey) {
