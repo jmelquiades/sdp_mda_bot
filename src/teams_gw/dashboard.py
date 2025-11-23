@@ -568,9 +568,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       function renderBacklogTrend(backlog) {
         const container = document.getElementById("backlog-trend");
         if (!container) return;
-        const current = backlog?.current ?? 0;
-        const previous = backlog?.previous ?? 0;
-        const delta = backlog?.delta ?? 0;
+        const current = backlog && typeof backlog.current === "number" ? backlog.current : 0;
+        const previous = backlog && typeof backlog.previous === "number" ? backlog.previous : 0;
+        const delta = backlog && typeof backlog.delta === "number" ? backlog.delta : 0;
         const deltaClass = delta > 0 ? "delta up" : delta < 0 ? "delta down" : "delta muted";
         const arrow = delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
         container.querySelector(".value").textContent = current;
@@ -589,7 +589,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
           return;
         }
-        const insights = ((state.data.insights || {})[roleKey]) || null;
+        const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = buildInsightsHtml(roleKey, insights);
         const levels = roleData.levels
           .map(
