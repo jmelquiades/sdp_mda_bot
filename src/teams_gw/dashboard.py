@@ -10,10 +10,10 @@ from fastapi.responses import HTMLResponse
 ROLE_META = {
     "supervisor": {
         "label": "Supervisor de Mesa",
-        "description": "Visibilidad de recordatorios al técnico y escalaciones iniciales.",
+        "description": "Casos que llevan varios días en estado Asignado.",
         "color": "#2563eb",
         "levels": [
-            {"key": "recordatorio_tecnico", "label": "Recordatorios disparados"},
+            {"key": "recordatorio_tecnico", "label": "Tickets sin moverse"},
             {"key": "Escalamiento_Supervisor", "label": "Escalaciones activas"},
         ],
         "notification_roles": ["tecnico", "supervisor_mesa"],
@@ -523,7 +523,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 
       function formatDate(value) {
         if (!value) return "-";
-        const date = new Date(value);
+        let date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          // Force UTC parsing if the string has no timezone
+          date = new Date(String(value).replace(" ", "T") + "Z");
+        }
         if (Number.isNaN(date.getTime())) return value;
         try {
           return date.toLocaleString("es-PE", {
@@ -604,6 +608,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             "<div class='role-panel'><div class='empty-state'>Sin datos disponibles para este rol.</div></div>";
           return;
         }
+        const firedReminders = state.data && state.data.fired_reminders ? state.data.fired_reminders : { count: 0, items: [] };
         const insights = state.data && state.data.insights ? state.data.insights[roleKey] : null;
         const insightsHtml = buildInsightsHtml(roleKey, insights);
         const snapshotHtml = roleKey === "supervisor" ? buildSnapshotHtml(state.data.snapshot || {}) : "";
@@ -625,9 +630,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 <p>${roleData.description}</p>
               </div>
               <div class="role-kpi">
-                <div class="number">${roleData.total_alerts}</div>
-                <div class="muted">Alertas vigentes</div>
-                <div class="hint">Incluye recordatorios y escalaciones activas</div>
+                <div class="number">${roleKey === "supervisor" ? (firedReminders.count || 0) : roleData.total_alerts}</div>
+                <div class="muted">${roleKey === "supervisor" ? "Tickets sin moverse" : "Alertas vigentes"}</div>
+                ${roleKey === "supervisor" ? "" : "<div class='hint'>Incluye recordatorios y escalaciones activas</div>"}
               </div>
             </div>
             <div class="level-grid">${levels}</div>
@@ -822,7 +827,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Recordatorios disparados</h3>
+                <h3>Tickets sin moverse (última corrida)</h3>
                 ${renderFiredReminders(firedReminders.items || [])}
               </div>
               <div class="notification-card">
@@ -841,9 +846,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             ...item,
             category: classifyNotification(item.nivel),
             display_level: prettifyLevel(item.nivel),
-    })),
-  );
-}
+          })),
+        );
+      }
 
 function groupNotifications(items) {
   const grouped = { reminders: [], escalations: [] };
@@ -911,7 +916,7 @@ function prettifyLevel(level) {
 
       function renderFiredReminders(items) {
         if (!items.length) {
-          return "<div class='empty-state'>No hay recordatorios disparados.</div>";
+          return "<div class='empty-state'>No hay tickets sin moverse en la última corrida.</div>";
         }
         const rows = items
           .map((item) => {
@@ -932,7 +937,7 @@ function prettifyLevel(level) {
                 <th>Ticket</th>
                 <th>Técnico</th>
                 <th>Asunto</th>
-                <th>Fecha/Hora regla</th>
+                <th>Fecha/Hora (Asig. sin avance)</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
