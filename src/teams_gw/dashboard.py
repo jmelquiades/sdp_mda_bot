@@ -833,10 +833,6 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 ${renderFiredReminders(assignedSnapshot.items || [])}
               </div>
               <div class="notification-card">
-                <h3>Detalle de escalaciones <span class="tag">A8</span></h3>
-                ${renderNotificationTable(grouped.escalations, "Sin escalaciones activas.")}
-              </div>
-              <div class="notification-card">
                 <h3>Recordatorios repetidos <span class="tag">A9</span></h3>
                 ${renderAggregatedReminders(repeatedReminders)}
               </div>
