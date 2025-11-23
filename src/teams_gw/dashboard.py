@@ -523,11 +523,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 
       function formatDate(value) {
         if (!value) return "-";
-        let date = new Date(value);
-        if (Number.isNaN(date.getTime())) {
-          // Force UTC parsing if the string has no timezone
-          date = new Date(String(value).replace(" ", "T") + "Z");
-        }
+        const raw = String(value).replace(" ", "T");
+        // Si no viene zona horaria, asumimos UTC y agregamos "Z"
+        const hasZone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(raw);
+        const iso = hasZone ? raw : `${raw}Z`;
+        const date = new Date(iso);
         if (Number.isNaN(date.getTime())) return value;
         try {
           return date.toLocaleString("es-PE", {
