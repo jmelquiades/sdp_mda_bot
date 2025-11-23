@@ -88,6 +88,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
     runs = raw.get("recent_runs") or []
     summary = raw.get("summary") or {}
     role_insights = raw.get("role_insights") or {}
+    backlog_delta = raw.get("backlog_delta") or {}
 
     roles_payload: Dict[str, Any] = {}
     for role_key in allowed_roles:
@@ -126,6 +127,7 @@ def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Di
         "roles": roles_payload,
         "runs": runs,
         "insights": role_insights,
+        "backlog": backlog_delta,
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -185,6 +187,36 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       header p {
         margin: 0;
         color: #64748b;
+      }
+      .trend-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 14px;
+        min-width: 180px;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+        text-align: right;
+      }
+      .trend-card .label {
+        color: #475569;
+        font-size: 13px;
+        margin: 0 0 4px;
+      }
+      .trend-card .value {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        color: #0f172a;
+      }
+      .trend-card .delta {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .delta.up {
+        color: #059669;
+      }
+      .delta.down {
+        color: #dc2626;
       }
       .summary-grid {
         display: grid;
@@ -458,6 +490,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           <h1>Backlog Dashboard</h1>
           <p id="last-updated">Actualizando…</p>
         </div>
+        <div class="trend-card" id="backlog-trend">
+          <p class="label">Alertas vigentes</p>
+          <p class="value">-</p>
+          <p class="delta muted">Sin dato previo</p>
+        </div>
       </header>
       <section>
         <div class="tabs" id="role-tabs"></div>
@@ -494,6 +531,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           const payload = await response.json();
           state.data = payload;
           setText("last-updated", "Actualizado: " + formatDate(state.data.refreshed_at));
+          renderBacklogTrend(state.data.backlog);
           renderTabs();
           renderRole(state.activeRole);
         } catch (err) {
@@ -525,6 +563,22 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           });
           container.appendChild(button);
         });
+      }
+
+      function renderBacklogTrend(backlog) {
+        const container = document.getElementById("backlog-trend");
+        if (!container) return;
+        const current = backlog?.current ?? 0;
+        const previous = backlog?.previous ?? 0;
+        const delta = backlog?.delta ?? 0;
+        const deltaClass = delta > 0 ? "delta up" : delta < 0 ? "delta down" : "delta muted";
+        const arrow = delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
+        container.querySelector(".value").textContent = current;
+        const deltaEl = container.querySelector(".delta");
+        if (deltaEl) {
+          deltaEl.textContent = previous === 0 ? "Sin dato previo" : `${delta}% ${arrow} vs última corrida`;
+          deltaEl.className = deltaClass;
+        }
       }
 
       function renderRole(roleKey) {
