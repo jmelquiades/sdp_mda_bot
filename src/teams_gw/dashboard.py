@@ -662,23 +662,28 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         const panelData = state.data && state.data.role_panels ? state.data.role_panels[roleKey] : null;
         const fired = (panelData && panelData.fired) || [];
         const nearNext = (panelData && panelData.near_next) || [];
+        const isGerente = roleKey === "gerente";
         container.innerHTML = `
           <div class="role-panel">
             <div class="role-header" style="border-color: ${roleData.color};">
               <div>
                 <h2>${roleData.label} <span class="tag">B1</span></h2>
-                <p>${roleData.description}</p>
+                <p>${isGerente ? "Tickets con mucho tiempo Sin Atenderse" : roleData.description}</p>
               </div>
             </div>
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Disparados en última corrida <span class="tag">B2</span></h3>
+                <h3>${isGerente ? "Detalle de Tickets con mucho tiempo Sin Atenderse" : "Detalle de Tickets que superaron el control anterior"} <span class="tag">B2</span></h3>
                 ${renderFiredReminders(fired)}
               </div>
-              <div class="notification-card">
-                <h3>Próximos al siguiente nivel <span class="tag">B3</span></h3>
-                ${renderAtRiskDetail(nearNext)}
-              </div>
+              ${
+                isGerente
+                  ? ""
+                  : `<div class="notification-card">
+                      <h3>Detalle de Ticket próximos a escalar al siguiente Nivel <span class="tag">B3</span></h3>
+                      ${renderAtRiskDetail(nearNext)}
+                    </div>`
+              }
             </div>
           </div>
         `;
