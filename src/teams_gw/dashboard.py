@@ -666,17 +666,17 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           <div class="role-panel">
             <div class="role-header" style="border-color: ${roleData.color};">
               <div>
-                <h2>${roleData.label}</h2>
+                <h2>${roleData.label} <span class="tag">B1</span></h2>
                 <p>${roleData.description}</p>
               </div>
             </div>
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Disparados en última corrida</h3>
+                <h3>Disparados en última corrida <span class="tag">B2</span></h3>
                 ${renderFiredReminders(fired)}
               </div>
               <div class="notification-card">
-                <h3>Próximos al siguiente nivel</h3>
+                <h3>Próximos al siguiente nivel <span class="tag">B3</span></h3>
                 ${renderAtRiskDetail(nearNext)}
               </div>
             </div>
