@@ -631,10 +631,14 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             .map((lvl, idx) => {
               const tag = idx === 0 ? "A2" : idx === 1 ? "A3" : "";
               const tagHtml = tag ? `<span class="tag">${tag}</span>` : "";
+              const label =
+                idx === 1
+                  ? "Tickets próximos a escalar al siguiente Nivel"
+                  : lvl.label;
               return `
                 <div class="level-card">
                   ${tagHtml}
-                  <h4>${lvl.label}</h4>
+                  <h4>${label}</h4>
                   <div class="count">${lvl.count}</div>
                 </div>
               `;
@@ -673,7 +677,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             </div>
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>${isGerente ? "Detalle de Tickets con mucho tiempo Sin Atenderse" : "Detalle de Tickets que superaron el control anterior"} <span class="tag">B2</span></h3>
+                <h3>${
+                  isGerente
+                    ? "Detalle de Tickets que superaron todos los controles previos"
+                    : "Detalle de Tickets que superaron el control anterior"
+                } <span class="tag">B2</span></h3>
                 ${renderFiredReminders(fired)}
               </div>
               ${
@@ -898,7 +906,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 ${renderFiredReminders(assignedSnapshot.items || [])}
               </div>
               <div class="notification-card">
-                <h3>Detalla de Ticket próximos a escalar al siguiente Nivel <span class="tag">A9</span></h3>
+                <h3>Detalle de Tickets próximos a escalar al siguiente Nivel <span class="tag">A9</span></h3>
                 ${renderAtRiskDetail(atRiskNear)}
               </div>
             </div>
