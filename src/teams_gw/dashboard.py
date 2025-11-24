@@ -195,11 +195,14 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         padding: 0;
         background: #f5f6fb;
         color: #0f172a;
+        width: 100%;
+        overflow-x: hidden;
       }
       .dashboard {
-        max-width: 1280px;
+        max-width: 1100px;
         margin: 0 auto;
-        padding: 32px 24px 48px;
+        padding: 24px 16px 40px;
+        width: 100%;
       }
       header {
         display: flex;
@@ -506,6 +509,21 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
         .insights-grid {
           grid-template-columns: 1fr;
+        }
+      }
+      /* Ajuste para contenedores embebidos (Teams) */
+      @media (max-width: 1400px) {
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+        .notification-grid {
+          grid-template-columns: 1fr;
+        }
+        .insights-grid {
+          grid-template-columns: 1fr;
+        }
+        .dashboard {
+          padding: 20px 12px 32px;
         }
       }
     </style>
