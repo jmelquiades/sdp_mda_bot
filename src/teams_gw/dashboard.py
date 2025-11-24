@@ -10,11 +10,11 @@ from fastapi.responses import HTMLResponse
 ROLE_META = {
     "supervisor": {
         "label": "Supervisor de Mesa",
-        "description": "Casos que llevan varios días en estado Asignado.",
+        "description": "Casos que ameritan revisión a nivel de Supervisión",
         "color": "#2563eb",
         "levels": [
-            {"key": "recordatorio_tecnico", "label": "Tickets sin moverse"},
-            {"key": "Escalamiento_Supervisor", "label": "Tickets próximos a escalar"},
+            {"key": "recordatorio_tecnico", "label": "Tickets sin Inicio de Atención"},
+            {"key": "Escalamiento_Supervisor", "label": "Tickets proximos a escalar al siguiente Nivel"},
         ],
         "notification_roles": ["tecnico", "supervisor_mesa"],
     },
@@ -649,7 +649,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 </div>
                 <div class="role-kpi">
                   <div class="number">${assignedSnapshot.count || 0}</div>
-                  <div class="muted">Tickets sin moverse</div>
+                  <div class="muted">Tickets sin Inicio de Atención</div>
                 </div>
               </div>
               <div class="level-grid">${levels}</div>
@@ -889,11 +889,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Tickets sin moverse (última corrida) <span class="tag">A7</span></h3>
+                <h3>Detalle de Tickets sin inicio de Atención <span class="tag">A7</span></h3>
                 ${renderFiredReminders(assignedSnapshot.items || [])}
               </div>
               <div class="notification-card">
-                <h3>Tickets próximos a escalar <span class="tag">A9</span></h3>
+                <h3>Detalla de Ticket próximos a escalar al siguiente Nivel <span class="tag">A9</span></h3>
                 ${renderAtRiskDetail(atRiskNear)}
               </div>
             </div>
