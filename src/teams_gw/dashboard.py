@@ -532,7 +532,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     <div class="dashboard">
       <header>
         <div>
-          <h1>Backlog Dashboard</h1>
+          <h1>Backlog & Alertas</h1>
           <p id="last-updated">Actualizando…</p>
         </div>
         <div class="last-check-card" id="last-check-card">
