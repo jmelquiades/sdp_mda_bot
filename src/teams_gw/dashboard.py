@@ -207,7 +207,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       header {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: flex-start;
         gap: 8px;
       }
@@ -231,7 +231,6 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         padding: 8px 10px;
         min-width: 220px;
         box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
-        margin-left: auto;
       }
       .last-check-card h3 {
         margin: 0 0 4px;
@@ -912,13 +911,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       }
 
       function buildNotificationSection(roleKey, notifications, atRiskNear = []) {
-        if (!notifications.length) {
-          return "<div class='empty-state'>Sin alertas recientes.</div>";
-        }
         if (roleKey === "supervisor") {
-          const grouped = groupNotifications(notifications);
-          const repeatedReminders = aggregateRepeatedReminders(grouped.reminders);
           const assignedSnapshot = state.data && state.data.snapshot && state.data.snapshot.assigned ? state.data.snapshot.assigned : { items: [] };
+          const supervisorNotifications = notifications || [];
           return `
             <div class="notification-grid">
               <div class="notification-card">
@@ -931,6 +926,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               </div>
             </div>
           `;
+        }
+        if (!notifications.length) {
+          return "<div class='empty-state'>Sin alertas recientes.</div>";
         }
         return renderNotificationTable(
           notifications.map((item) => ({
