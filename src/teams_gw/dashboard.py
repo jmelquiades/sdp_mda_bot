@@ -231,6 +231,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         padding: 8px 10px;
         min-width: 220px;
         box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+        margin-left: auto;
       }
       .last-check-card h3 {
         margin: 0 0 4px;
@@ -651,15 +652,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           const atRiskNear = state.data && state.data.at_risk_near ? state.data.at_risk_near : [];
           const levels = roleData.levels
             .map((lvl, idx) => {
-              const tag = idx === 0 ? "A2" : idx === 1 ? "A3" : "";
-              const tagHtml = tag ? `<span class="tag">${tag}</span>` : "";
               const label =
                 idx === 1
                   ? "Tickets próximos a escalar al siguiente Nivel"
                   : lvl.label;
               return `
                 <div class="level-card">
-                  ${tagHtml}
                   <h4>${label}</h4>
                   <div class="count">${lvl.count}</div>
                 </div>
@@ -670,7 +668,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <div class="role-panel">
               <div class="role-header" style="border-color: ${roleData.color};">
                 <div>
-                  <h2>${roleData.label} <span class="tag">A1</span></h2>
+                  <h2>${roleData.label}</h2>
                   <p>${roleData.description}</p>
                 </div>
                 <div class="role-kpi">
@@ -693,7 +691,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           <div class="role-panel">
             <div class="role-header" style="border-color: ${roleData.color};">
               <div>
-                <h2>${roleData.label} <span class="tag">B1</span></h2>
+                <h2>${roleData.label}</h2>
                 <p>${isGerente ? "Tickets con mucho tiempo Sin Atenderse" : roleData.description}</p>
               </div>
             </div>
@@ -703,14 +701,14 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                   isGerente
                     ? "Detalle de Tickets que superaron todos los controles previos"
                     : "Detalle de Tickets que superaron el control anterior"
-                } <span class="tag">B2</span></h3>
+                }</h3>
                 ${renderFiredReminders(fired)}
               </div>
               ${
                 isGerente
                   ? ""
                   : `<div class="notification-card">
-                      <h3>Detalle de Ticket próximos a escalar al siguiente Nivel <span class="tag">B3</span></h3>
+                      <h3>Detalle de Ticket próximos a escalar al siguiente Nivel</h3>
                       ${renderAtRiskDetail(nearNext)}
                     </div>`
               }
@@ -924,11 +922,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           return `
             <div class="notification-grid">
               <div class="notification-card">
-                <h3>Detalle de Tickets sin inicio de Atención <span class="tag">A7</span></h3>
+                <h3>Detalle de Tickets sin inicio de Atención</h3>
                 ${renderFiredReminders(assignedSnapshot.items || [])}
               </div>
               <div class="notification-card">
-                <h3>Detalle de Tickets próximos a escalar al siguiente Nivel <span class="tag">A9</span></h3>
+                <h3>Detalle de Tickets próximos a escalar al siguiente Nivel</h3>
                 ${renderAtRiskDetail(atRiskNear)}
               </div>
             </div>
