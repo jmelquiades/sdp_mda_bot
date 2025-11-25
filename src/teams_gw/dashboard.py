@@ -199,20 +199,20 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         overflow-x: hidden;
       }
       .dashboard {
-        max-width: 1024px;
+        max-width: 1000px;
         margin: 0 auto;
-        padding: 18px 12px 32px;
+        padding: 12px 12px 28px;
         width: 100%;
       }
       header {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
-        align-items: flex-end;
-        gap: 12px;
+        align-items: flex-start;
+        gap: 8px;
       }
       header h1 {
-        font-size: 26px;
+        font-size: 22px;
         margin: 0;
         color: #0f172a;
       }
@@ -292,8 +292,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       .tabs {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 32px;
+        gap: 10px;
+        margin-top: 12px;
       }
       .tab {
         border: none;
