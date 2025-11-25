@@ -199,9 +199,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         overflow-x: hidden;
       }
       .dashboard {
-        max-width: 1080px;
+        max-width: 1024px;
         margin: 0 auto;
-        padding: 20px 14px 36px;
+        padding: 18px 12px 32px;
         width: 100%;
       }
       header {
@@ -209,10 +209,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: flex-end;
-        gap: 16px;
+        gap: 12px;
       }
       header h1 {
-        font-size: 28px;
+        font-size: 26px;
         margin: 0;
         color: #0f172a;
       }
@@ -223,10 +223,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       .last-check-card {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 10px 12px;
-        min-width: 240px;
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+        border-radius: 12px;
+        padding: 8px 10px;
+        min-width: 220px;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
       }
       .last-check-card h3 {
         margin: 0 0 4px;
@@ -295,7 +295,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         border: none;
         background: #e2e8f0;
         color: #475569;
-        padding: 9px 16px;
+        padding: 8px 14px;
         border-radius: 999px;
         font-weight: 500;
         cursor: pointer;
@@ -307,11 +307,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
       }
       .role-panel {
-        margin-top: 20px;
+        margin-top: 18px;
         background: #fff;
-        border-radius: 18px;
-        padding: 22px;
-        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
       }
       .role-header {
         display: flex;
@@ -341,10 +341,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         color: #94a3b8;
       }
       .level-grid {
-        margin-top: 20px;
+        margin-top: 16px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
       }
       .level-card {
         background: #f8fafc;
@@ -364,10 +364,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         color: #0f172a;
       }
       .notification-grid {
-        margin-top: 24px;
+        margin-top: 18px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 14px;
       }
       .notification-card {
         background: #fff;
@@ -495,7 +495,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         text-align: center;
         color: #94a3b8;
       }
-      @media (max-width: 768px) {
+      @media (max-width: 820px) {
         header {
           flex-direction: column;
           align-items: flex-start;
@@ -512,7 +512,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
       }
       /* Ajuste para contenedores embebidos (Teams) */
-      @media (max-width: 1200px) {
+      @media (max-width: 1180px) {
         .summary-grid {
           grid-template-columns: 1fr;
         }
@@ -523,7 +523,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           grid-template-columns: 1fr;
         }
         .dashboard {
-          padding: 18px 12px 30px;
+          padding: 16px 10px 26px;
         }
       }
     </style>
