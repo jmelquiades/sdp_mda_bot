@@ -220,6 +220,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         margin: 0;
         color: #64748b;
       }
+      .header-title,
+      #last-updated {
+        display: none;
+      }
       .last-check-card {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -531,7 +535,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
   <body>
     <div class="dashboard">
       <header>
-        <div>
+        <div class="header-title">
           <h1>Backlog & Alertas</h1>
           <p id="last-updated">Actualizando…</p>
         </div>
