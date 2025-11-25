@@ -183,7 +183,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Controller Dashboard</title>
+    <title>Backlog & Alertas</title>
     <style>
       :root {
         color-scheme: light;
@@ -193,15 +193,15 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       body {
         margin: 0;
         padding: 0;
-        background: #f5f6fb;
+        background: linear-gradient(180deg, #f7f8fc 0%, #f1f4fb 120%);
         color: #0f172a;
         width: 100%;
         overflow-x: hidden;
       }
       .dashboard {
-        max-width: 1100px;
+        max-width: 1080px;
         margin: 0 auto;
-        padding: 24px 16px 40px;
+        padding: 20px 14px 36px;
         width: 100%;
       }
       header {
@@ -223,10 +223,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       .last-check-card {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 14px 16px;
+        border-radius: 14px;
+        padding: 10px 12px;
         min-width: 240px;
-        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
       }
       .last-check-card h3 {
         margin: 0 0 4px;
@@ -252,9 +252,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       }
       .card {
         background: #fff;
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -295,7 +295,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         border: none;
         background: #e2e8f0;
         color: #475569;
-        padding: 10px 18px;
+        padding: 9px 16px;
         border-radius: 999px;
         font-weight: 500;
         cursor: pointer;
@@ -310,8 +310,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         margin-top: 20px;
         background: #fff;
         border-radius: 18px;
-        padding: 24px;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        padding: 22px;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
       }
       .role-header {
         display: flex;
@@ -348,8 +348,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       }
       .level-card {
         background: #f8fafc;
-        border-radius: 14px;
-        padding: 16px;
+        border-radius: 12px;
+        padding: 14px;
         border: 1px solid #e2e8f0;
       }
       .level-card h4 {
@@ -512,7 +512,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
       }
       /* Ajuste para contenedores embebidos (Teams) */
-      @media (max-width: 1400px) {
+      @media (max-width: 1200px) {
         .summary-grid {
           grid-template-columns: 1fr;
         }
@@ -523,7 +523,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           grid-template-columns: 1fr;
         }
         .dashboard {
-          padding: 20px 12px 32px;
+          padding: 18px 12px 30px;
         }
       }
     </style>
