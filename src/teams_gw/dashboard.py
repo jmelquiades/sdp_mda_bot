@@ -1575,14 +1575,17 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         align-items: flex-start;
         gap: 16px;
         margin-bottom: 18px;
+        flex-wrap: wrap;
       }
       .hero-card {
         background: #0b1120;
         color: #f8fafc;
-        padding: 16px 18px;
+        padding: 12px 14px;
         border-radius: 14px;
         box-shadow: 0 18px 42px rgba(15, 23, 42, 0.32);
-        min-width: 240px;
+        min-width: 220px;
+        max-width: 320px;
+        width: fit-content;
       }
       .hero-number { font-size: 24px; font-weight: 700; margin: 4px 0; color: #f8fafc; }
       .hero-card p { color: #e2e8f0; }
@@ -1650,6 +1653,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         padding: 6px 10px;
         background: #f8fafc;
         color: #0f172a;
+        position: relative;
+        z-index: 2;
       }
       table {
         width: 100%;
@@ -1709,7 +1714,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       @media (max-width: 1024px) {
         .grid { grid-template-columns: 1fr; }
         .hero { flex-direction: column; }
-        .hero-card { width: 100%; }
+        .hero-card { width: 100%; max-width: 100%; }
       }
     </style>
   </head>
