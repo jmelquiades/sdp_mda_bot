@@ -1585,7 +1585,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         min-width: 240px;
       }
       .hero-number { font-size: 24px; font-weight: 700; margin: 4px 0; }
-      .band-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
       .kpi-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1720,12 +1719,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <p class="eyebrow">Controller SDP</p>
           <h1>Riesgo y Corridas</h1>
           <p class="muted">Visión rápida de tickets cerca de umbral y grupos con mayor exposición.</p>
-          <div class="band-pills" id="band-pills">
-            <span class="pill pill-sm rojo">Alto 0</span>
-            <span class="pill pill-sm naranja">Medio 0</span>
-            <span class="pill pill-sm amarillo">Seguimiento 0</span>
-            <span class="pill pill-sm verde">Sano 0</span>
-          </div>
         </div>
         <div class="hero-card">
           <p class="small muted">Última actualización</p>
@@ -1748,11 +1741,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <p class="label">Estables</p>
           <div class="kpi-value" id="kpi-low">-</div>
           <p class="muted small">Tickets verdes</p>
-        </div>
-        <div class="kpi-card accent-indigo">
-          <p class="label">Grupos en riesgo</p>
-          <div class="kpi-value" id="kpi-groups">-</div>
-          <p class="muted small">Con al menos 1 ticket rojo/naranja</p>
         </div>
       </div>
       <div class="tabs" id="view-tabs">
@@ -1857,22 +1845,11 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       function renderSummary(risk, ops) {
         const items = risk.items || [];
         const sum = summarizeRisk(items);
-        const groupsRisky = (ops.groups || []).filter((g) => (g.bands?.rojo || 0) + (g.bands?.naranja || 0) > 0).length;
-        const bandPills = document.getElementById("band-pills");
-        if (bandPills) {
-          bandPills.innerHTML = `
-            <span class="pill pill-sm rojo">Alto ${sum.bands.rojo}</span>
-            <span class="pill pill-sm naranja">Medio ${sum.bands.naranja}</span>
-            <span class="pill pill-sm amarillo">Seguimiento ${sum.bands.amarillo}</span>
-            <span class="pill pill-sm verde">Sano ${sum.bands.verde}</span>
-          `;
-        }
         const kpi = document.getElementById("kpi-grid");
         if (kpi) {
           kpi.querySelector("#kpi-high").textContent = (sum.bands.rojo + sum.bands.naranja) || 0;
           kpi.querySelector("#kpi-mid").textContent = sum.bands.amarillo || 0;
           kpi.querySelector("#kpi-low").textContent = sum.bands.verde || 0;
-          kpi.querySelector("#kpi-groups").textContent = groupsRisky || 0;
         }
       }
 
