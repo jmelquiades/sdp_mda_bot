@@ -1717,8 +1717,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       <div class="hero">
         <div>
           <p class="eyebrow">Controller SDP</p>
-          <h1>Riesgo y Corridas</h1>
-          <p class="muted">Visión rápida de tickets cerca de umbral y grupos con mayor exposición.</p>
+          <h1>Alertas por Umbral</h1>
+          <p class="muted">Detalle accionable de tickets, servicios y grupos antes de que escalen.</p>
         </div>
         <div class="hero-card">
           <p class="small muted">Última actualización</p>
