@@ -498,6 +498,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .compact-table .col-tech { max-width: 210px; }
+      .compact-table .col-channel { max-width: 140px; }
       .compact-table .progress-cell {
         width: 92px;
       }
@@ -887,7 +889,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               (item) => `
               <tr>
                 <td>#${item.ticket_id || "-"}</td>
-                <td>${item.technician || "-"}</td>
+                <td>${formatTechnician(item.technician || item.technician_name || item.technician_id) || "-"}</td>
                 <td>${item.subject || "-"}</td>
                 <td>${formatDate(item.assigned_at || item.created_at)}</td>
                 <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
@@ -1109,7 +1111,7 @@ function prettifyLevel(level) {
             return `
               <tr>
                 <td class="col-ticket">#${item.ticket_id || "-"}</td>
-                <td class="col-tech">${item.technician || item.technician_id || "-"}</td>
+                <td class="col-tech">${formatTechnician(item.technician || item.technician_name || item.technician_id) || "-"}</td>
                 <td class="subject-cell">${item.subject || "-"}</td>
                 <td class="col-date">${formatDate(item.assigned_at || item.sent_at)}</td>
                 <td>${link}</td>
@@ -1147,7 +1149,7 @@ function prettifyLevel(level) {
             return `
               <tr>
                 <td class="col-ticket">#${item.ticket_id || "-"}</td>
-                <td class="col-tech">${item.technician || "-"}</td>
+                <td class="col-tech">${formatTechnician(item.technician || item.technician_name || item.technician_id) || "-"}</td>
                 <td class="subject-cell">${item.subject || "-"}</td>
                 <td class="progress-cell"><span class="${badgeClass}">${ratio}%</span></td>
                 <td>${link}</td>
