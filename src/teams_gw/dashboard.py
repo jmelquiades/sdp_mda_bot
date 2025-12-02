@@ -1549,19 +1549,19 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       :root {
         color-scheme: light;
         font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #0b1224;
+        background: #f5f7fb;
       }
       body {
         margin: 0;
-        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 25%),
-                    radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.14), transparent 22%),
-                    #0b1224;
-        color: #e2e8f0;
+        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 26%),
+                    radial-gradient(circle at 85% 12%, rgba(16, 185, 129, 0.12), transparent 24%),
+                    #eef2f8;
+        color: #0f172a;
       }
       .shell {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 28px 18px 64px;
+        padding: 32px 20px 64px;
       }
       header {
         display: flex;
