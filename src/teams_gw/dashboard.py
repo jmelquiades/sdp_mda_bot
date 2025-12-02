@@ -2020,7 +2020,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       function renderServicios(risk, filters, summary) {
         const body = document.querySelector("#service-table tbody");
         if (!body) return;
-        const rows = (risk.items || []).slice(0, 50).map(item => {
+        const rows = (risk.items || []).map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
           return `<tr>
@@ -2036,7 +2036,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
         serviceFilters.innerHTML = "";
-        const makeSelect = (label, fieldKey, data) => {
+        const makeSelect = (label, fieldKey, data, deps = {}) => {
           const select = document.createElement("select");
           select.className = "filter";
           const empty = document.createElement("option");
@@ -2064,9 +2064,25 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           select.id = `sf-${fieldKey}`;
           return select;
         };
+        const baseItems = risk.items || [];
+        const currentCategory = filters.category ? filters.category.toLowerCase() : "";
+        const currentSubcategory = filters.subcategory ? filters.subcategory.toLowerCase() : "";
+        const filteredSubcats = {};
+        const filteredItems = {};
+        baseItems.forEach((item) => {
+          const cat = item.category || "Sin categoría";
+          const sub = item.subcategory || "Sin subcategoría";
+          const it = item.item || "Sin item";
+          if (!filters.category || cat.toLowerCase() === currentCategory) {
+            filteredSubcats[sub] = (filteredSubcats[sub] || 0) + 1;
+            if (!filters.subcategory || sub.toLowerCase() === currentSubcategory) {
+              filteredItems[it] = (filteredItems[it] || 0) + 1;
+            }
+          }
+        });
         serviceFilters.appendChild(makeSelect("Categoría", "category", summary.categories||{}));
-        serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", summary.subcategories||{}));
-        serviceFilters.appendChild(makeSelect("Item", "item", summary.items||{}));
+        serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", filteredSubcats));
+        serviceFilters.appendChild(makeSelect("Item", "item", filteredItems));
         serviceFilters.appendChild(makeSelect("Tipo", "request_type", summary.request_types||{}));
         serviceFilters.appendChild(makeSelect("Prioridad", "priority", summary.priorities||{}));
       }
