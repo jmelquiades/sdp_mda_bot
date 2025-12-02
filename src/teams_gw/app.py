@@ -372,9 +372,12 @@ def _controller_base_url() -> str:
 
 
 @app.get("/dashboard/data/risk")
-async def dashboard_risk():
+async def dashboard_risk(request: Request):
     base = _controller_base_url()
+    qs = request.url.query
     url = f"{base}/risk"
+    if qs:
+        url = f"{url}?{qs}"
     try:
         return await fetch_controller_generic(url)
     except Exception as exc:

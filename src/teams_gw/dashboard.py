@@ -1639,7 +1639,12 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         </div>
         <div id="last-updated" class="muted"></div>
       </header>
-      <div class="grid">
+      <div class="tabs" id="view-tabs">
+        <button class="tab active" data-tab="tiempo">Tiempo</button>
+        <button class="tab" data-tab="personas">Personas</button>
+        <button class="tab" data-tab="servicios">Servicios</button>
+      </div>
+      <div class="grid" id="grid-tiempo">
         <div class="card">
           <h3>Tickets en mayor riesgo</h3>
           <div class="filters" id="risk-filters"></div>
@@ -1659,6 +1664,27 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
           </table>
           <div id="group-detail"></div>
+        </div>
+      </div>
+      <div class="grid" id="grid-personas" style="display:none;">
+        <div class="card" style="grid-column: span 2;">
+          <h3>Personas y grupos en riesgo</h3>
+          <p class="muted">Haz clic en un grupo para ver técnicos y tickets en riesgo alto.</p>
+          <table id="groups-table-personas">
+            <thead><tr><th>Grupo</th><th>Riesgo alto</th><th>Total</th></tr></thead>
+            <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
+          </table>
+          <div id="group-detail-personas"></div>
+        </div>
+      </div>
+      <div class="grid" id="grid-servicios" style="display:none;">
+        <div class="card" style="grid-column: span 2;">
+          <h3>Servicios con más riesgo</h3>
+          <div class="filters" id="service-filters"></div>
+          <table id="service-table">
+            <thead><tr><th>Ticket</th><th>Categoría</th><th>Subcategoría</th><th>Item</th><th>Riesgo</th><th></th></tr></thead>
+            <tbody><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1758,6 +1784,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         });
         // Limpia detalle inicial
         renderGroupDetail((ops.groups || [])[0]?.group || "");
+        renderPersonas(ops);
+        renderServicios(risk, filters, summary);
       }
 
       function renderFilters(summary, current) {
@@ -1801,6 +1829,108 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         container.appendChild(buildSelect("Prioridad", "priority", summary.priorities || {}));
       }
 
+      function renderPersonas(ops) {
+        const body = document.querySelector("#groups-table-personas tbody");
+        if (!body) return;
+        body.innerHTML = (ops.groups || []).slice(0, 12).map(g => {
+          const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
+          const total = Object.values(g.bands || {}).reduce((a,b)=>a+ (b||0),0);
+          return `<tr data-group="${g.group}"><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
+        }).join("") || `<tr><td colspan="3" class="muted">Sin datos de grupos.</td></tr>`;
+        const detail = document.getElementById("group-detail-personas");
+        body.querySelectorAll("tr[data-group]").forEach(row => {
+            row.style.cursor = "pointer";
+            row.addEventListener("click", () => {
+              const g = row.getAttribute("data-group");
+              const group = (ops.groups || []).find(x => (x.group || "").toLowerCase() === g.toLowerCase());
+              if (!detail) return;
+              if (!group) { detail.innerHTML = ""; return; }
+              const tickets = group.tickets || [];
+              const techCounts = {};
+              tickets.forEach(item => {
+                const band = item.risk_band;
+                if (band !== "rojo" && band !== "naranja") return;
+                const key = item.technician_name || item.technician_id || "sin técnico";
+                techCounts[key] = (techCounts[key] || 0) + 1;
+              });
+              const techHtml = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([tech,count])=>`<span class="badge">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
+              const rows = tickets.slice(0,30).map(item => {
+                const band=item.risk_band||"verde"; const link=item.ticket_link?`<a href=\"${item.ticket_link}\" target=\"_blank\">Abrir</a>`:"-";
+                return `<tr><td>#${item.ticket_id}</td><td>${fmtName(item.technician||item.technician_name||item.technician_id||'')}</td><td><span class=\"pill ${band}\">${Math.round((item.ratio||0)*100)}%</span></td><td>${item.threshold_days||"-"}</td><td>${link}</td></tr>`;
+              }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
+              detail.innerHTML = `<h4>Detalle de ${g}</h4><div style="margin:6px 0 10px;">Técnicos más expuestos: ${techHtml}</div><table><thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+            });
+        });
+      }
+
+      function renderServicios(risk, filters, summary) {
+        const body = document.querySelector("#service-table tbody");
+        if (!body) return;
+        const rows = (risk.items || []).slice(0, 50).map(item => {
+          const band = item.risk_band || "verde";
+          const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
+          return `<tr>
+            <td>#${item.ticket_id}</td>
+            <td>${item.category || "-"}</td>
+            <td>${item.subcategory || "-"}</td>
+            <td>${item.item || "-"}</td>
+            <td><span class="pill ${band}">${Math.round((item.ratio || 0)*100)}%</span></td>
+            <td>${link}</td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets filtrados.</td></tr>`;
+        body.innerHTML = rows;
+        const serviceFilters = document.getElementById("service-filters");
+        if (!serviceFilters) return;
+        serviceFilters.innerHTML = "";
+        // Reuse same selects for servicios tab
+        const makeSelect = (label, fieldKey, data) => {
+          const select = document.createElement("select");
+          select.className = "filter";
+          const empty = document.createElement("option");
+          empty.value = "";
+          empty.textContent = label;
+          select.appendChild(empty);
+          Object.keys(data||{}).sort().forEach(opt=>{
+            const op=document.createElement("option");
+            op.value=opt.startsWith("Sin ")? "":opt;
+            op.textContent=`${opt} (${data[opt]})`;
+            if ((filters[fieldKey]||"").toLowerCase() === op.value.toLowerCase()) op.selected=true;
+            select.appendChild(op);
+          });
+          select.addEventListener("change", ()=>{
+            const newFilters = {
+              category: serviceFilters.querySelector("#sf-category")?.value || undefined,
+              subcategory: serviceFilters.querySelector("#sf-subcategory")?.value || undefined,
+              item: serviceFilters.querySelector("#sf-item")?.value || undefined,
+              request_type: serviceFilters.querySelector("#sf-request_type")?.value || undefined,
+              priority: serviceFilters.querySelector("#sf-priority")?.value || undefined,
+            };
+            loadAll(newFilters).catch(console.error);
+          });
+          select.id = `sf-${fieldKey}`;
+          return select;
+        };
+        serviceFilters.appendChild(makeSelect("Categoría", "category", summary.categories||{}));
+        serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", summary.subcategories||{}));
+        serviceFilters.appendChild(makeSelect("Item", "item", summary.items||{}));
+        serviceFilters.appendChild(makeSelect("Tipo", "request_type", summary.request_types||{}));
+        serviceFilters.appendChild(makeSelect("Prioridad", "priority", summary.priorities||{}));
+      }
+
+      // Tabs logic
+      const tabs = document.getElementById("view-tabs");
+      if (tabs) {
+        tabs.querySelectorAll(".tab").forEach(btn => {
+          btn.addEventListener("click", () => {
+            tabs.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const tab = btn.getAttribute("data-tab");
+            document.getElementById("grid-tiempo").style.display = tab === "tiempo" ? "grid" : "none";
+            document.getElementById("grid-personas").style.display = tab === "personas" ? "grid" : "none";
+            document.getElementById("grid-servicios").style.display = tab === "servicios" ? "grid" : "none";
+          });
+        });
+      }
       loadAll().catch(err => console.error(err));
     </script>
   </body>
