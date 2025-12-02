@@ -1547,83 +1547,71 @@ RISK_TEMPLATE = """<!DOCTYPE html>
     <title>Riesgo y Corridas</title>
     <style>
       :root {
-        color-scheme: light;
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #f5f7fb;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 26%),
-                    radial-gradient(circle at 85% 12%, rgba(16, 185, 129, 0.12), transparent 24%),
-                    #eef2f8;
-        color: #0f172a;
-      }
-      .shell {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 32px 20px 64px;
-      }
-      header {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-      h1 {
-        margin: 0;
-        font-size: 26px;
-        color: #f8fafc;
-      }
-      .muted { color: #94a3b8; }
-      .grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 16px;
-        margin-top: 18px;
-      }
-      .card {
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        border-radius: 14px;
-        padding: 16px;
-        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th, td {
-        padding: 10px 8px;
-        font-size: 13px;
-      }
-      th {
-        text-align: left;
-        color: #94a3b8;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-      }
-      tr + tr td {
-        border-top: 1px solid rgba(148, 163, 184, 0.14);
-      }
-      .pill {
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 12px;
-        color: #0f172a;
-      }
-      .pill.verde { background: #bbf7d0; }
-      .pill.amarillo { background: #fef08a; }
-      .pill.naranja { background: #fdba74; }
-      .pill.rojo { background: #fca5a5; }
-      .badge {
-        padding: 4px 8px;
-        border-radius: 10px;
-        background: rgba(148, 163, 184, 0.15);
-        color: #e2e8f0;
-        font-size: 12px;
-      }
-      a { color: #60a5fa; text-decoration: none; }
+-        color-scheme: light;
+-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+-        background: #f5f7fb;
+-      }
+-      body {
+-        margin: 0;
+-        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 26%),
+-                    radial-gradient(circle at 85% 12%, rgba(16, 185, 129, 0.12), transparent 24%),
+-                    #eef2f8;
+-        color: #0f172a;
+-      }
++      :root {
++        color-scheme: light;
++        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
++        background: #f6f8fb;
++      }
++      body {
++        margin: 0;
++        background: radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.08), transparent 28%),
++                    radial-gradient(circle at 82% 12%, rgba(16, 185, 129, 0.1), transparent 26%),
++                    #f6f8fb;
++        color: #0f172a;
++      }
+@@
+-      h1 { margin: 0; font-size: 26px; color: #f8fafc; }
+-      .muted { color: #94a3b8; }
++      h1 { margin: 0; font-size: 26px; color: #0f172a; }
++      .muted { color: #4b5563; }
+@@
+-      .card {
+-        background: rgba(15, 23, 42, 0.85);
+-        border: 1px solid rgba(148, 163, 184, 0.2);
+-        border-radius: 14px;
+-        padding: 16px;
+-        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+-      }
++      .card {
++        background: #ffffff;
++        border: 1px solid #e5e7eb;
++        border-radius: 14px;
++        padding: 16px;
++        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
++      }
+@@
+-      th { text-align: left; color: #94a3b8; border-bottom: 1px solid rgba(148, 163, 184, 0.2); }
+-      tr + tr td { border-top: 1px solid rgba(148, 163, 184, 0.14); }
++      th { text-align: left; color: #475569; border-bottom: 1px solid #e5e7eb; }
++      tr + tr td { border-top: 1px solid #e5e7eb; }
+@@
+-      .badge {
+-        padding: 4px 8px;
+-        border-radius: 10px;
+-        background: rgba(148, 163, 184, 0.15);
+-        color: #e2e8f0;
+-        font-size: 12px;
+-      }
+-      a { color: #60a5fa; text-decoration: none; }
++      .badge {
++        padding: 4px 8px;
++        border-radius: 10px;
++        background: #e5e7eb;
++        color: #0f172a;
++        font-size: 12px;
++      }
++      a { color: #1d4ed8; text-decoration: none; }
       a:hover { text-decoration: underline; }
       @media (max-width: 960px) {
         .grid { grid-template-columns: 1fr; }
