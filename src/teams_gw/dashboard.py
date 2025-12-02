@@ -1881,45 +1881,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         `;
       };
 
-      function renderGroupDetail(groupName) {
-        const container = document.getElementById("group-detail");
-        if (!container) return;
-        const group = (opsData?.groups || []).find(g => (g.group || "").toLowerCase() === groupName.toLowerCase());
-        if (!group) {
-          container.innerHTML = "";
-          return;
-        }
-        const tickets = group.tickets || [];
-        const rows = tickets.slice(0, 30).map(item => {
-          const band = item.risk_band || "verde";
-          const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
-          return `<tr>
-            <td>#${item.ticket_id || "-"}</td>
-            <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
-            <td>${item.subject || "-"}</td>
-            <td>${buildRiskCell(item.ratio, band)}</td>
-            <td>${item.threshold_days || "-"}</td>
-            <td>${link}</td>
-          </tr>`;
-        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets en riesgo.</td></tr>`;
-        const techCounts = {};
-        tickets.forEach(item => {
-          const band = item.risk_band;
-          if (band !== "rojo" && band !== "naranja") return;
-          const key = item.technician_name || item.technician_id || "sin técnico";
-          techCounts[key] = (techCounts[key] || 0) + 1;
-        });
-        const topTech = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-        const techHtml = topTech.map(([tech,count])=>`<span class="badge">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
-        container.innerHTML = `
-          <h4>Detalle de ${group.group}</h4>
-          <div class="detail-block">Técnicos más expuestos: ${techHtml}</div>
-          <table>
-            <thead><tr><th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-      }
       async function loadAll(filters = {}) {
         const [risk, ops, summary] = await Promise.all([
           fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
@@ -1939,7 +1900,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         renderFilters(summary, filters, items);
 
         const riskBody = document.querySelector("#risk-table tbody");
-        const rows = timeFiltered.slice(0, 50).map(item => {
+        const rows = timeFiltered.map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
           return `<tr>
@@ -1954,20 +1915,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         }).join("") || `<tr><td colspan="7" class="muted">Sin tickets en riesgo.</td></tr>`;
         riskBody.innerHTML = rows;
 
-        const groupsBody = document.querySelector("#groups-table tbody");
-        groupsBody.innerHTML = (ops.groups || []).slice(0,8).map(g => {
-          const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
-          const total = Object.values(g.bands || {}).reduce((a,b)=>a+ (b||0),0);
-          return `<tr data-group="${g.group}"><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
-        }).join("") || `<tr><td colspan="3" class="muted">Sin datos de grupos.</td></tr>`;
-        groupsBody.querySelectorAll("tr[data-group]").forEach(row => {
-          row.style.cursor = "pointer";
-          row.addEventListener("click", () => {
-            const g = row.getAttribute("data-group");
-            renderGroupDetail(g);
-          });
-        });
-        renderGroupDetail((ops.groups || [])[0]?.group || "");
         renderPersonas(ops);
         renderServicios({ items: serviceFiltered }, filters, summary);
       }
