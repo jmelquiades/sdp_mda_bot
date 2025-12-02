@@ -1647,15 +1647,47 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         align-items: flex-start;
       }
       .filters { display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1000; overflow: visible; }
-      .filters select {
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 6px 10px;
-        background: #f8fafc;
-        color: #0f172a;
+      .dropdown {
         position: relative;
+        min-width: 180px;
         z-index: 1001;
       }
+      .dropdown-toggle {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        color: #0f172a;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+      }
+      .dropdown-toggle::after {
+        content: "▾";
+        float: right;
+        color: #475569;
+      }
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+        max-height: 280px;
+        overflow-y: auto;
+        display: none;
+      }
+      .dropdown.open .dropdown-menu { display: block; }
+      .dropdown-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        color: #0f172a;
+      }
+      .dropdown-item:hover { background: #f1f5f9; }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -1823,6 +1855,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       };
       const baseUrl = window.location.origin;
       let opsData = null;
+      const uiState = { filters: {} };
       const matchServiceFilters = (item, filters) => {
         if (filters.category && (item.category || "").toLowerCase() !== filters.category.toLowerCase()) return false;
         if (filters.subcategory && (item.subcategory || "").toLowerCase() !== filters.subcategory.toLowerCase()) return false;
@@ -1832,8 +1865,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         return true;
       };
       const currentThreshold = () => {
-        const sel = document.getElementById("f-threshold");
-        return sel ? sel.value || undefined : undefined;
+        return uiState.filters.threshold;
       };
 
       function summarizeRisk(items = []) {
@@ -1877,6 +1909,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       };
 
       async function loadAll(filters = {}) {
+        uiState.filters = { ...uiState.filters, ...filters };
         const [risk, ops, summary] = await Promise.all([
           fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []})),
@@ -1914,6 +1947,40 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         renderServicios({ items: serviceFiltered }, filters, summary);
       }
 
+      function buildDropdown({ placeholder, options, selected, onSelect, id }) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "dropdown";
+        if (id) wrapper.id = id;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "dropdown-toggle";
+        const current = options.find((o) => String(o.value || "") === String(selected || ""));
+        button.textContent = current ? current.label : placeholder;
+        const menu = document.createElement("div");
+        menu.className = "dropdown-menu";
+        options.forEach((opt) => {
+          const item = document.createElement("div");
+          item.className = "dropdown-item";
+          item.textContent = opt.label;
+          item.addEventListener("click", () => {
+            button.textContent = opt.label;
+            wrapper.classList.remove("open");
+            onSelect(opt.value || undefined);
+          });
+          menu.appendChild(item);
+        });
+        button.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = wrapper.classList.contains("open");
+          document.querySelectorAll(".dropdown.open").forEach((el) => el.classList.remove("open"));
+          if (!isOpen) wrapper.classList.add("open");
+        });
+        document.addEventListener("click", () => wrapper.classList.remove("open"));
+        wrapper.appendChild(button);
+        wrapper.appendChild(menu);
+        return wrapper;
+      }
+
       function renderFilters(summary, current, riskItems = []) {
         const container = document.getElementById("risk-filters");
         if (!container) return;
@@ -1925,35 +1992,20 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           const key = item.threshold_days || 0;
           thresholds[key] = (thresholds[key] || 0) + 1;
         });
-        const select = document.createElement("select");
-        select.className = "filter";
-        select.id = "f-threshold";
-        const empty = document.createElement("option");
-        empty.value = "";
-        empty.textContent = "Umbral (todos)";
-        select.appendChild(empty);
-        Object.keys(thresholds)
+        const opts = Object.keys(thresholds)
           .map(Number)
           .sort((a, b) => a - b)
-          .forEach((val) => {
-            const op = document.createElement("option");
-            op.value = String(val);
-            op.textContent = `${val} días (${thresholds[val]})`;
-            if (String(current.threshold || "") === String(val)) op.selected = true;
-            select.appendChild(op);
-          });
-        select.addEventListener("change", () => {
-          const filters = {
-            threshold: select.value || undefined,
-            category: document.querySelector("#sf-category")?.value || undefined,
-            subcategory: document.querySelector("#sf-subcategory")?.value || undefined,
-            item: document.querySelector("#sf-item")?.value || undefined,
-            request_type: document.querySelector("#sf-request_type")?.value || undefined,
-            priority: document.querySelector("#sf-priority")?.value || undefined,
-          };
-          loadAll(filters).catch(console.error);
+          .map((val) => ({ value: String(val), label: `${val} días (${thresholds[val]})` }));
+        opts.unshift({ value: "", label: "Umbral (todos)" });
+        const dropdown = buildDropdown({
+          placeholder: "Umbral (todos)",
+          options: opts,
+          selected: current.threshold,
+          onSelect: (val) => {
+            loadAll({ ...uiState.filters, threshold: val || undefined }).catch(console.error);
+          },
         });
-        container.appendChild(select);
+        container.appendChild(dropdown);
       }
 
       function renderPersonas(ops) {
@@ -2034,38 +2086,15 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
         serviceFilters.innerHTML = "";
-        const makeSelect = (label, fieldKey, data, deps = {}) => {
-          const select = document.createElement("select");
-          select.className = "filter";
-          const empty = document.createElement("option");
-          empty.value = "";
-          empty.textContent = `Seleccionar ${label.toLowerCase()}`;
-          select.appendChild(empty);
-          Object.keys(data || {})
+        const makeOptions = (data, placeholder) => {
+          const opts = Object.keys(data || {})
             .sort()
-            .forEach((opt) => {
-              const op = document.createElement("option");
-              op.value = opt.startsWith("Sin ") ? "" : opt;
-              op.textContent = `${opt} (${data[opt]})`;
-              const currentVal = filters[fieldKey] || "";
-              if (currentVal && currentVal.toLowerCase() === op.value.toLowerCase()) {
-                op.selected = true;
-              }
-              select.appendChild(op);
-            });
-          select.addEventListener("change", ()=>{
-            const newFilters = {
-              threshold: currentThreshold(),
-              category: serviceFilters.querySelector("#sf-category")?.value || undefined,
-              subcategory: serviceFilters.querySelector("#sf-subcategory")?.value || undefined,
-              item: serviceFilters.querySelector("#sf-item")?.value || undefined,
-              request_type: serviceFilters.querySelector("#sf-request_type")?.value || undefined,
-              priority: serviceFilters.querySelector("#sf-priority")?.value || undefined,
-            };
-            loadAll(newFilters).catch(console.error);
-          });
-          select.id = `sf-${fieldKey}`;
-          return select;
+            .map((opt) => ({
+              value: opt,
+              label: `${opt} (${data[opt]})`,
+            }));
+          opts.unshift({ value: "", label: placeholder });
+          return opts;
         };
         const baseItems = risk.items || [];
         const currentCategory = filters.category ? filters.category.toLowerCase() : "";
@@ -2091,11 +2120,27 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           typeCounts[req] = (typeCounts[req] || 0) + 1;
           priorityCounts[prio] = (priorityCounts[prio] || 0) + 1;
         });
-        serviceFilters.appendChild(makeSelect("Tipo", "request_type", typeCounts));
-        serviceFilters.appendChild(makeSelect("Prioridad", "priority", priorityCounts));
-        serviceFilters.appendChild(makeSelect("Categoría", "category", categoriesCounts));
-        serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", filteredSubcats));
-        serviceFilters.appendChild(makeSelect("Item", "item", filteredItems));
+        const dropdowns = [
+          { id: "sf-request_type", field: "request_type", opts: makeOptions(typeCounts, "Seleccionar tipo") },
+          { id: "sf-priority", field: "priority", opts: makeOptions(priorityCounts, "Seleccionar prioridad") },
+          { id: "sf-category", field: "category", opts: makeOptions(categoriesCounts, "Seleccionar categoría") },
+          { id: "sf-subcategory", field: "subcategory", opts: makeOptions(filteredSubcats, "Seleccionar subcategoría") },
+          { id: "sf-item", field: "item", opts: makeOptions(filteredItems, "Seleccionar item") },
+        ];
+        dropdowns.forEach(({ id, field, opts }) => {
+          const selected = filters[field] || "";
+          const dropdown = buildDropdown({
+            id,
+            placeholder: opts[0]?.label || `Seleccionar ${field}`,
+            options: opts,
+            selected,
+            onSelect: (val) => {
+              const newFilters = { ...uiState.filters, [field]: val || undefined };
+              loadAll(newFilters).catch(console.error);
+            },
+          });
+          serviceFilters.appendChild(dropdown);
+        });
       }
 
       const tabs = document.getElementById("view-tabs");
