@@ -2096,11 +2096,11 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           typeCounts[req] = (typeCounts[req] || 0) + 1;
           priorityCounts[prio] = (priorityCounts[prio] || 0) + 1;
         });
+        serviceFilters.appendChild(makeSelect("Tipo", "request_type", typeCounts));
+        serviceFilters.appendChild(makeSelect("Prioridad", "priority", priorityCounts));
         serviceFilters.appendChild(makeSelect("Categoría", "category", categoriesCounts));
         serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", filteredSubcats));
         serviceFilters.appendChild(makeSelect("Item", "item", filteredItems));
-        serviceFilters.appendChild(makeSelect("Tipo", "request_type", typeCounts));
-        serviceFilters.appendChild(makeSelect("Prioridad", "priority", priorityCounts));
       }
 
       const tabs = document.getElementById("view-tabs");
