@@ -1547,71 +1547,40 @@ RISK_TEMPLATE = """<!DOCTYPE html>
     <title>Riesgo y Corridas</title>
     <style>
       :root {
--        color-scheme: light;
--        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
--        background: #f5f7fb;
--      }
--      body {
--        margin: 0;
--        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 26%),
--                    radial-gradient(circle at 85% 12%, rgba(16, 185, 129, 0.12), transparent 24%),
--                    #eef2f8;
--        color: #0f172a;
--      }
-+      :root {
-+        color-scheme: light;
-+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-+        background: #f6f8fb;
-+      }
-+      body {
-+        margin: 0;
-+        background: radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.08), transparent 28%),
-+                    radial-gradient(circle at 82% 12%, rgba(16, 185, 129, 0.1), transparent 26%),
-+                    #f6f8fb;
-+        color: #0f172a;
-+      }
+        color-scheme: light;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f8fb;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.08), transparent 28%),
+                    radial-gradient(circle at 82% 12%, rgba(16, 185, 129, 0.1), transparent 26%),
+                    #f6f8fb;
+        color: #0f172a;
+      }
 @@
--      h1 { margin: 0; font-size: 26px; color: #f8fafc; }
--      .muted { color: #94a3b8; }
-+      h1 { margin: 0; font-size: 26px; color: #0f172a; }
-+      .muted { color: #4b5563; }
+      h1 { margin: 0; font-size: 26px; color: #0f172a; }
+      .muted { color: #4b5563; }
 @@
--      .card {
--        background: rgba(15, 23, 42, 0.85);
--        border: 1px solid rgba(148, 163, 184, 0.2);
--        border-radius: 14px;
--        padding: 16px;
--        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
--      }
-+      .card {
-+        background: #ffffff;
-+        border: 1px solid #e5e7eb;
-+        border-radius: 14px;
-+        padding: 16px;
-+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-+      }
+      .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+      }
 @@
--      th { text-align: left; color: #94a3b8; border-bottom: 1px solid rgba(148, 163, 184, 0.2); }
--      tr + tr td { border-top: 1px solid rgba(148, 163, 184, 0.14); }
-+      th { text-align: left; color: #475569; border-bottom: 1px solid #e5e7eb; }
-+      tr + tr td { border-top: 1px solid #e5e7eb; }
+      th { text-align: left; color: #475569; border-bottom: 1px solid #e5e7eb; }
+      tr + tr td { border-top: 1px solid #e5e7eb; }
 @@
--      .badge {
--        padding: 4px 8px;
--        border-radius: 10px;
--        background: rgba(148, 163, 184, 0.15);
--        color: #e2e8f0;
--        font-size: 12px;
--      }
--      a { color: #60a5fa; text-decoration: none; }
-+      .badge {
-+        padding: 4px 8px;
-+        border-radius: 10px;
-+        background: #e5e7eb;
-+        color: #0f172a;
-+        font-size: 12px;
-+      }
-+      a { color: #1d4ed8; text-decoration: none; }
+      .badge {
+        padding: 4px 8px;
+        border-radius: 10px;
+        background: #e5e7eb;
+        color: #0f172a;
+        font-size: 12px;
+      }
+      a { color: #1d4ed8; text-decoration: none; }
       a:hover { text-decoration: underline; }
       @media (max-width: 960px) {
         .grid { grid-template-columns: 1fr; }
