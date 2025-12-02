@@ -2024,14 +2024,17 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
           return `<tr>
-            <td>#${item.ticket_id}</td>
+            <td class="subject-cell">#${item.ticket_id}</td>
+            <td class="subject-cell">${item.subject || "-"}</td>
+            <td>${item.requester || "-"}</td>
             <td>${item.category || "-"}</td>
             <td>${item.subcategory || "-"}</td>
             <td>${item.item || "-"}</td>
             <td>${buildRiskCell(item.ratio, band)}</td>
+            <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets filtrados.</td></tr>`;
+        }).join("") || `<tr><td colspan="9" class="muted">Sin tickets filtrados.</td></tr>`;
         body.innerHTML = rows;
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
@@ -2075,10 +2078,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const categoriesCounts = {};
         const filteredSubcats = {};
         const filteredItems = {};
+        const typeCounts = {};
+        const priorityCounts = {};
         baseItems.forEach((item) => {
           const cat = item.category || "Sin categoría";
           const sub = item.subcategory || "Sin subcategoría";
           const it = item.item || "Sin item";
+          const req = item.request_type || "Sin tipo";
+          const prio = item.priority || "Sin prioridad";
           categoriesCounts[cat] = (categoriesCounts[cat] || 0) + 1;
           if (!filters.category || cat.toLowerCase() === currentCategory) {
             filteredSubcats[sub] = (filteredSubcats[sub] || 0) + 1;
@@ -2086,12 +2093,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
               filteredItems[it] = (filteredItems[it] || 0) + 1;
             }
           }
+          typeCounts[req] = (typeCounts[req] || 0) + 1;
+          priorityCounts[prio] = (priorityCounts[prio] || 0) + 1;
         });
         serviceFilters.appendChild(makeSelect("Categoría", "category", categoriesCounts));
         serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", filteredSubcats));
         serviceFilters.appendChild(makeSelect("Item", "item", filteredItems));
-        serviceFilters.appendChild(makeSelect("Tipo", "request_type", summary.request_types||{}));
-        serviceFilters.appendChild(makeSelect("Prioridad", "priority", summary.priorities||{}));
+        serviceFilters.appendChild(makeSelect("Tipo", "request_type", typeCounts));
+        serviceFilters.appendChild(makeSelect("Prioridad", "priority", priorityCounts));
       }
 
       const tabs = document.getElementById("view-tabs");
