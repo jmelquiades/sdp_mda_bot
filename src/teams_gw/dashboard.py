@@ -488,7 +488,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       .compact-table td:nth-child(2) { width: 160px; }
       .compact-table th:nth-child(3),
       .compact-table td:nth-child(3) { width: 220px; }
-      .compact-table .subject-cell {
+      .compact-table th:nth-child(4),
+      .compact-table td:nth-child(4) { width: 140px; }
+      .compact-table .subject-cell,
+      .compact-table .col-tech,
+      .compact-table .col-channel,
+      .compact-table .col-date {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -647,6 +652,26 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
       }
 
+      function formatTechnician(value) {
+        if (!value) return "-";
+        if (typeof value === "string") {
+          if (value.includes("@")) {
+            const user = value.split("@")[0];
+            const cleaned = user.replace(/[._]/g, " ").replace(/\s+/g, " ").trim();
+            if (cleaned) {
+              return cleaned
+                .split(" ")
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ");
+            }
+          }
+          return value;
+        }
+        if (value.name) return value.name;
+        if (value.display) return value.display;
+        return value.toString();
+      }
+
       function setText(id, value) {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
@@ -801,7 +826,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                   <td>#${item.ticket_id}</td>
                   <td>${formatDate(item.created_at)}</td>
                   <td>${item.requester || "-"}</td>
-                  <td>${item.technician || "-"}</td>
+                  <td>${formatTechnician(item.technician || item.technician_name || item.technician_id) || "-"}</td>
                   <td>${item.priority || "-"}</td>
                   <td>${item.active_days} / ${item.threshold_days} días</td>
                   <td><span class="${pillClass}">${Math.round(item.ratio * 100)}%</span></td>
@@ -877,7 +902,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               (item) => `
               <tr>
                 <td>#${item.ticket_id || "-"}</td>
-                <td>${item.technician || "-"}</td>
+                <td>${formatTechnician(item.technician || item.technician_name || item.technician_id) || "-"}</td>
                 <td>${item.subject || "-"}</td>
                 <td>${Math.round((item.ratio || 0) * 100)}%</td>
                 <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
@@ -892,7 +917,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
               (item) => `
               <tr>
                 <td>#${item.ticket_id || "-"}</td>
-                <td>${item.technician || "-"}</td>
+                <td>${formatTechnician(item.technician || item.technician_name || item.technician_id) || "-"}</td>
                 <td>${item.subject || "-"}</td>
                 <td>${Math.round((item.ratio || 0) * 100)}%</td>
                 <td>${item.ticket_link ? `<a class="action-link" href="${item.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-"}</td>
