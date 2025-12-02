@@ -509,6 +509,13 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       .compact-table .progress-cell {
         width: 92px;
       }
+      /* Ampliar columnas en modo Gerente */
+      .gerente-wide .compact-table th:nth-child(2),
+      .gerente-wide .compact-table td:nth-child(2) { width: 220px; max-width: 240px; }
+      .gerente-wide .compact-table th:nth-child(3),
+      .gerente-wide .compact-table td:nth-child(3) { width: 320px; max-width: 360px; }
+      .gerente-wide .compact-table .col-tech { max-width: 260px; }
+      .gerente-wide .compact-table .subject-cell { max-width: 420px; }
       .badge {
         display: inline-flex;
         align-items: center;
