@@ -198,15 +198,17 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     <title>Backlog & Alertas</title>
     <style>
       :root {
-        color-scheme: light;
+        color-scheme: dark;
         font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background-color: #f5f6fb;
+        background-color: #0b1224;
       }
       body {
         margin: 0;
         padding: 0;
-        background: linear-gradient(180deg, #f7f8fc 0%, #f1f4fb 120%);
-        color: #0f172a;
+        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 25%),
+                    radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.14), transparent 22%),
+                    #0b1224;
+        color: #e2e8f0;
         width: 100%;
         overflow-x: hidden;
       }
@@ -270,10 +272,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         margin-top: 24px;
       }
       .card {
-        background: #fff;
+        background: rgba(15, 23, 42, 0.9);
         border-radius: 14px;
         padding: 18px;
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(148, 163, 184, 0.25);
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -285,24 +288,16 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         color: #94a3b8;
         margin: 0;
       }
-      .card .value {
-        font-size: 32px;
-        font-weight: 600;
-        color: #0f172a;
-      }
-      .card .muted {
-        font-size: 13px;
-        color: #94a3b8;
-      }
-      .muted {
-        color: #94a3b8;
-      }
+      .card .value { font-size: 32px; font-weight: 600; color: #f8fafc; }
+      .card .muted { font-size: 13px; color: #cbd5e1; }
+      .muted { color: #cbd5e1; }
       .chart-card {
         margin-top: 24px;
-        background: #fff;
+        background: rgba(15, 23, 42, 0.9);
         border-radius: 18px;
         padding: 24px;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        box-shadow: 0 14px 32px rgba(0,0,0,0.4);
+        border: 1px solid rgba(148, 163, 184, 0.25);
       }
       .tabs {
         display: flex;
@@ -312,8 +307,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       }
       .tab {
         border: none;
-        background: #e2e8f0;
-        color: #475569;
+        background: #1e293b;
+        color: #e2e8f0;
         padding: 8px 14px;
         border-radius: 999px;
         font-weight: 500;
@@ -321,16 +316,17 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         transition: all 0.2s ease;
       }
       .tab.active {
-        background: #0f172a;
-        color: #fff;
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+        background: #1d4ed8;
+        color: #f8fafc;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.35);
       }
       .role-panel {
         margin-top: 18px;
-        background: #fff;
+        background: rgba(15, 23, 42, 0.9);
         border-radius: 16px;
         padding: 20px;
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+        border: 1px solid rgba(148, 163, 184, 0.25);
       }
       .role-header {
         display: flex;
@@ -366,10 +362,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         gap: 14px;
       }
       .level-card {
-        background: #f8fafc;
+        background: #1e293b;
         border-radius: 12px;
         padding: 14px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid rgba(148, 163, 184, 0.25);
       }
       .level-card h4 {
         margin: 0;
@@ -1656,14 +1652,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           </table>
         </div>
         <div class="card">
-          <h3>Corridas recientes</h3>
-          <table id="runs-table">
-            <thead>
-              <tr><th>Inicio</th><th>Estado</th><th>Tickets</th><th>Alertas</th></tr>
-            </thead>
-            <tbody><tr><td colspan="4" class="muted">Cargando…</td></tr></tbody>
-          </table>
-          <h3 style="margin-top:18px;">Grupos con más riesgo</h3>
+          <h3>Grupos con más riesgo</h3>
           <table id="groups-table">
             <thead><tr><th>Grupo</th><th>Riesgo alto</th><th>Total</th></tr></thead>
             <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
@@ -1728,9 +1717,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         `;
       }
       async function loadAll() {
-        const [risk, runs, ops] = await Promise.all([
+        const [risk, ops] = await Promise.all([
           fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
-          fetch(baseUrl + "/dashboard/data/runs").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []}))
         ]);
         opsData = ops;
@@ -1750,17 +1738,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           </tr>`;
         }).join("") || `<tr><td colspan="6" class="muted">Sin tickets en riesgo.</td></tr>`;
         riskBody.innerHTML = rows;
-
-        const runsBody = document.querySelector("#runs-table tbody");
-        runsBody.innerHTML = (runs.runs || []).slice(0,8).map(run => {
-          const pill = run.estado === "error" ? "pill rojo" : run.estado === "advertencia" ? "pill naranja" : "pill verde";
-          return `<tr>
-            <td>${fmtDate(run.fecha_inicio)}</td>
-            <td><span class="${pill}">${run.estado}</span></td>
-            <td>${run.tickets}</td>
-            <td>${run.alertas}</td>
-          </tr>`;
-        }).join("") || `<tr><td colspan="4" class="muted">Sin corridas recientes.</td></tr>`;
 
         const groupsBody = document.querySelector("#groups-table tbody");
         groupsBody.innerHTML = (ops.groups || []).slice(0,8).map(g => {
