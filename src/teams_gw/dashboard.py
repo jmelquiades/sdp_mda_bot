@@ -1779,14 +1779,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <tbody><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
-        <div class="card">
-          <h3>Grupos con más riesgo</h3>
-          <table id="groups-table">
-            <thead><tr><th>Grupo</th><th>Riesgo alto</th><th>Total</th></tr></thead>
-            <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
-          </table>
-          <div id="group-detail"></div>
-        </div>
       </div>
       <div class="grid" id="grid-personas" style="display:none;">
         <div class="card" style="grid-column: span 2;">
