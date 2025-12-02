@@ -374,6 +374,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         gap: 16px;
         align-items: start;
       }
+      .notification-grid.single {
+        grid-template-columns: 1fr;
+      }
       .notification-card {
         background: #fff;
         border-radius: 16px;
@@ -790,7 +793,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 <p>${isGerente ? "Tickets con mucho tiempo Sin Atenderse" : roleData.description}</p>
               </div>
             </div>
-            <div class="notification-grid">
+            <div class="notification-grid${isGerente ? " single" : ""}">
               <div class="notification-card">
                 <h3>${
                   isGerente
