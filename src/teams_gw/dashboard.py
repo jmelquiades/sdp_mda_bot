@@ -1577,14 +1577,15 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         margin-bottom: 18px;
       }
       .hero-card {
-        background: #0f172a;
-        color: #e2e8f0;
+        background: #0b1120;
+        color: #f8fafc;
         padding: 16px 18px;
         border-radius: 14px;
-        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.28);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.32);
         min-width: 240px;
       }
-      .hero-number { font-size: 24px; font-weight: 700; margin: 4px 0; }
+      .hero-number { font-size: 24px; font-weight: 700; margin: 4px 0; color: #f8fafc; }
+      .hero-card p { color: #e2e8f0; }
       .kpi-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
