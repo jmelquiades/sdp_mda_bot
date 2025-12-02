@@ -204,6 +204,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         padding: 12px 12px 28px;
         width: 100%;
       }
+      .gerente-wide .dashboard {
+        max-width: 96vw;
+      }
       header {
         display: flex;
         flex-wrap: wrap;
@@ -540,6 +543,10 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           max-width: 1280px;
           padding: 22px 22px 36px;
         }
+        .gerente-wide .dashboard {
+          max-width: 96vw;
+          padding: 24px 28px 40px;
+        }
         header {
           justify-content: space-between;
           align-items: center;
@@ -682,6 +689,16 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         if (el) el.textContent = value;
       }
 
+      function applyRoleLayout(roleKey) {
+        const body = document.body;
+        if (!body) return;
+        if (roleKey === "gerente") {
+          body.classList.add("gerente-wide");
+        } else {
+          body.classList.remove("gerente-wide");
+        }
+      }
+
       async function loadData() {
         try {
           const response = await fetch("/dashboard/data");
@@ -724,6 +741,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
             button.classList.add("active");
             renderRole(role);
+            applyRoleLayout(role);
           });
           container.appendChild(button);
         });
@@ -739,6 +757,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 
       function renderRole(roleKey) {
         const container = document.getElementById("role-panel");
+        applyRoleLayout(roleKey);
         const roleData = (state.data.roles || {})[roleKey];
         if (!roleData) {
           container.innerHTML =
