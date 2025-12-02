@@ -2041,7 +2041,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           select.className = "filter";
           const empty = document.createElement("option");
           empty.value = "";
-          empty.textContent = label;
+          empty.textContent = `Seleccionar ${label.toLowerCase()}`;
           select.appendChild(empty);
           Object.keys(data||{}).sort().forEach(opt=>{
             const op=document.createElement("option");
