@@ -370,8 +370,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       .notification-grid {
         margin-top: 18px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 16px;
+        align-items: start;
       }
       .notification-card {
         background: #fff;
@@ -379,6 +380,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         border: 1px solid #e2e8f0;
         padding: 16px;
         box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
       }
       .notification-card h3 {
         margin: 0 0 8px;
@@ -463,6 +467,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         border-collapse: collapse;
         margin-top: 24px;
         font-size: 14px;
+        table-layout: fixed;
       }
       th, td {
         padding: 12px 8px;
@@ -476,6 +481,20 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
       }
       tr + tr td {
         border-top: 1px solid #f1f5f9;
+      }
+      .compact-table th:nth-child(1),
+      .compact-table td:nth-child(1) { width: 88px; }
+      .compact-table th:nth-child(2),
+      .compact-table td:nth-child(2) { width: 160px; }
+      .compact-table th:nth-child(3),
+      .compact-table td:nth-child(3) { width: 220px; }
+      .compact-table .subject-cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .compact-table .progress-cell {
+        width: 92px;
       }
       .badge {
         display: inline-flex;
@@ -498,19 +517,30 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         padding: 24px;
         text-align: center;
         color: #94a3b8;
+        background: #f8fafc;
+        border: 1px dashed #e2e8f0;
+        border-radius: 12px;
       }
       /* Vista escritorio amplia (navegador) */
       @media (min-width: 1200px) {
         body {
-          padding: 8px 0 18px;
+          padding: 12px 0 24px;
         }
         .dashboard {
           max-width: 1280px;
-          padding: 18px 18px 32px;
+          padding: 22px 22px 36px;
         }
         header {
           justify-content: space-between;
           align-items: center;
+          position: sticky;
+          top: 0;
+          z-index: 8;
+          background: linear-gradient(180deg, rgba(247, 248, 252, 0.95), rgba(241, 244, 251, 0.9));
+          backdrop-filter: blur(6px);
+          padding: 10px 6px;
+          margin: 0 -4px 8px;
+          border-radius: 12px;
         }
         .header-title,
         #last-updated {
@@ -527,8 +557,15 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         .last-check-card {
           min-width: 260px;
         }
-        .notification-grid {
-          grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        .tabs {
+          position: sticky;
+          top: 76px;
+          z-index: 7;
+          background: linear-gradient(180deg, rgba(247, 248, 252, 0.9), rgba(241, 244, 251, 0.85));
+          padding: 10px 6px 6px;
+          margin: 0 -4px 8px;
+          border-radius: 12px;
+          backdrop-filter: blur(6px);
         }
       }
       @media (max-width: 820px) {
@@ -1012,16 +1049,16 @@ function prettifyLevel(level) {
                 : "badge";
             return `
               <tr>
-                <td>#${item.ticket_id || "-"}</td>
-                <td><span class="${badgeClass}">${item.display_level || item.nivel || "-"}</span></td>
-                <td>${item.canal || "-"}</td>
+                <td class="col-ticket">#${item.ticket_id || "-"}</td>
+                <td class="col-level"><span class="${badgeClass}">${item.display_level || item.nivel || "-"}</span></td>
+                <td class="col-channel">${item.canal || "-"}</td>
                 <td>${formatDate(item.fecha)}</td>
               </tr>
             `;
           })
           .join("");
         return `
-          <table>
+          <table class="compact-table">
             <thead>
               <tr>
                 <th>Ticket</th>
@@ -1046,17 +1083,17 @@ function prettifyLevel(level) {
               : "-";
             return `
               <tr>
-                <td>#${item.ticket_id || "-"}</td>
-                <td>${item.technician || item.technician_id || "-"}</td>
-                <td>${item.subject || "-"}</td>
-                <td>${formatDate(item.assigned_at || item.sent_at)}</td>
+                <td class="col-ticket">#${item.ticket_id || "-"}</td>
+                <td class="col-tech">${item.technician || item.technician_id || "-"}</td>
+                <td class="subject-cell">${item.subject || "-"}</td>
+                <td class="col-date">${formatDate(item.assigned_at || item.sent_at)}</td>
                 <td>${link}</td>
               </tr>
             `;
           })
           .join("");
         return `
-          <table>
+          <table class="compact-table">
             <thead>
               <tr>
                 <th>Ticket</th>
@@ -1084,17 +1121,17 @@ function prettifyLevel(level) {
               : "-";
             return `
               <tr>
-                <td>#${item.ticket_id || "-"}</td>
-                <td>${item.technician || "-"}</td>
-                <td>${item.subject || "-"}</td>
-                <td><span class="${badgeClass}">${ratio}%</span></td>
+                <td class="col-ticket">#${item.ticket_id || "-"}</td>
+                <td class="col-tech">${item.technician || "-"}</td>
+                <td class="subject-cell">${item.subject || "-"}</td>
+                <td class="progress-cell"><span class="${badgeClass}">${ratio}%</span></td>
                 <td>${link}</td>
               </tr>
             `;
           })
           .join("");
         return `
-          <table>
+          <table class="compact-table">
             <thead>
               <tr>
                 <th>Ticket</th>
