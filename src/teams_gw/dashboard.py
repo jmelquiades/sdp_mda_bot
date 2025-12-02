@@ -1825,6 +1825,18 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       };
       const baseUrl = window.location.origin;
       let opsData = null;
+      const matchServiceFilters = (item, filters) => {
+        if (filters.category && (item.category || "").toLowerCase() !== filters.category.toLowerCase()) return false;
+        if (filters.subcategory && (item.subcategory || "").toLowerCase() !== filters.subcategory.toLowerCase()) return false;
+        if (filters.item && (item.item || "").toLowerCase() !== filters.item.toLowerCase()) return false;
+        if (filters.request_type && (item.request_type || "").toLowerCase() !== filters.request_type.toLowerCase()) return false;
+        if (filters.priority && (item.priority || "").toLowerCase() !== filters.priority.toLowerCase()) return false;
+        return true;
+      };
+      const currentThreshold = () => {
+        const sel = document.getElementById("f-threshold");
+        return sel ? sel.value || undefined : undefined;
+      };
 
       function summarizeRisk(items = []) {
         const bands = { rojo: 0, naranja: 0, amarillo: 0, verde: 0 };
@@ -1917,19 +1929,25 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         `;
       }
       async function loadAll(filters = {}) {
-        const qs = new URLSearchParams(filters);
         const [risk, ops, summary] = await Promise.all([
-          fetch(baseUrl + "/dashboard/data/risk" + (qs.toString() ? "?" + qs.toString() : "")).then(r => r.json()),
+          fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []})),
           fetch(baseUrl + "/dashboard/data/risk/summary").then(r => r.json()).catch(() => ({})),
         ]);
         opsData = ops;
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
-        renderSummary(risk, ops);
-        renderFilters(summary, filters);
+        const items = risk.items || [];
+        const timeFiltered = items.filter((item) => {
+          const t = filters.threshold ? Number(filters.threshold) : null;
+          if (!t) return true;
+          return Number(item.threshold_days || 0) === t;
+        });
+        const serviceFiltered = items.filter((item) => matchServiceFilters(item, filters));
+        renderSummary({ items: timeFiltered }, ops);
+        renderFilters(summary, filters, items);
 
         const riskBody = document.querySelector("#risk-table tbody");
-        const rows = (risk.items || []).slice(0, 50).map(item => {
+        const rows = timeFiltered.slice(0, 50).map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
           return `<tr>
@@ -1959,48 +1977,49 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         });
         renderGroupDetail((ops.groups || [])[0]?.group || "");
         renderPersonas(ops);
-        renderServicios(risk, filters, summary);
+        renderServicios({ items: serviceFiltered }, filters, summary);
       }
 
-      function renderFilters(summary, current) {
+      function renderFilters(summary, current, riskItems = []) {
         const container = document.getElementById("risk-filters");
         if (!container) return;
-        const buildSelect = (label, fieldKey, data) => {
-          const options = Object.keys(data || {}).sort();
-          const select = document.createElement("select");
-          const empty = document.createElement("option");
-          empty.value = "";
-          empty.textContent = label;
-          select.appendChild(empty);
-          options.forEach(opt => {
-            const op = document.createElement("option");
-            op.value = opt.startsWith("Sin ") ? "" : opt;
-            op.textContent = `${opt} (${data[opt]})`;
-            if ((current[fieldKey] || "").toLowerCase() === op.value.toLowerCase()) op.selected = true;
-            select.appendChild(op);
-          });
-          select.addEventListener("change", () => {
-            const filters = {
-              category: document.getElementById("f-category").value || undefined,
-              subcategory: document.getElementById("f-subcategory").value || undefined,
-              item: document.getElementById("f-item").value || undefined,
-              request_type: document.getElementById("f-request_type").value || undefined,
-              priority: document.getElementById("f-priority").value || undefined,
-            };
-            loadAll(filters).catch(console.error);
-          });
-          select.id = `f-${fieldKey}`;
-          select.className = "filter";
-          return select;
-        };
         container.innerHTML = "";
         container.style.display = "flex";
         container.style.gap = "8px";
-        container.appendChild(buildSelect("Categoría", "category", summary.categories || {}));
-        container.appendChild(buildSelect("Subcategoría", "subcategory", summary.subcategories || {}));
-        container.appendChild(buildSelect("Item", "item", summary.items || {}));
-        container.appendChild(buildSelect("Tipo", "request_type", summary.request_types || {}));
-        container.appendChild(buildSelect("Prioridad", "priority", summary.priorities || {}));
+        const thresholds = {};
+        riskItems.forEach((item) => {
+          const key = item.threshold_days || 0;
+          thresholds[key] = (thresholds[key] || 0) + 1;
+        });
+        const select = document.createElement("select");
+        select.className = "filter";
+        select.id = "f-threshold";
+        const empty = document.createElement("option");
+        empty.value = "";
+        empty.textContent = "Umbral (todos)";
+        select.appendChild(empty);
+        Object.keys(thresholds)
+          .map(Number)
+          .sort((a, b) => a - b)
+          .forEach((val) => {
+            const op = document.createElement("option");
+            op.value = String(val);
+            op.textContent = `${val} días (${thresholds[val]})`;
+            if (String(current.threshold || "") === String(val)) op.selected = true;
+            select.appendChild(op);
+          });
+        select.addEventListener("change", () => {
+          const filters = {
+            threshold: select.value || undefined,
+            category: document.querySelector("#sf-category")?.value || undefined,
+            subcategory: document.querySelector("#sf-subcategory")?.value || undefined,
+            item: document.querySelector("#sf-item")?.value || undefined,
+            request_type: document.querySelector("#sf-request_type")?.value || undefined,
+            priority: document.querySelector("#sf-priority")?.value || undefined,
+          };
+          loadAll(filters).catch(console.error);
+        });
+        container.appendChild(select);
       }
 
       function renderPersonas(ops) {
@@ -2072,6 +2091,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           });
           select.addEventListener("change", ()=>{
             const newFilters = {
+              threshold: currentThreshold(),
               category: serviceFilters.querySelector("#sf-category")?.value || undefined,
               subcategory: serviceFilters.querySelector("#sf-subcategory")?.value || undefined,
               item: serviceFilters.querySelector("#sf-item")?.value || undefined,
