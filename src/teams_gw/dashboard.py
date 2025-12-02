@@ -499,6 +499,38 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         text-align: center;
         color: #94a3b8;
       }
+      /* Vista escritorio amplia (navegador) */
+      @media (min-width: 1200px) {
+        body {
+          padding: 8px 0 18px;
+        }
+        .dashboard {
+          max-width: 1280px;
+          padding: 18px 18px 32px;
+        }
+        header {
+          justify-content: space-between;
+          align-items: center;
+        }
+        .header-title,
+        #last-updated {
+          display: block;
+        }
+        .header-title h1 {
+          font-size: 24px;
+        }
+        .header-title p,
+        #last-updated {
+          color: #475569;
+          font-size: 13px;
+        }
+        .last-check-card {
+          min-width: 260px;
+        }
+        .notification-grid {
+          grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        }
+      }
       @media (max-width: 820px) {
         header {
           flex-direction: column;
