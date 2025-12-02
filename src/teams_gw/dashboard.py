@@ -1642,6 +1642,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       <div class="grid">
         <div class="card">
           <h3>Tickets en mayor riesgo</h3>
+          <div class="filters" id="risk-filters"></div>
           <table id="risk-table">
             <thead>
               <tr>
@@ -1716,13 +1717,16 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           </table>
         `;
       }
-      async function loadAll() {
-        const [risk, ops] = await Promise.all([
-          fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
-          fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []}))
+      async function loadAll(filters = {}) {
+        const qs = new URLSearchParams(filters);
+        const [risk, ops, summary] = await Promise.all([
+          fetch(baseUrl + "/dashboard/data/risk" + (qs.toString() ? "?" + qs.toString() : "")).then(r => r.json()),
+          fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []})),
+          fetch(baseUrl + "/dashboard/data/risk/summary").then(r => r.json()).catch(() => ({})),
         ]);
         opsData = ops;
         document.getElementById("last-updated").textContent = "Actualizado " + fmtDate(new Date().toISOString());
+        renderFilters(summary, filters);
 
         const riskBody = document.querySelector("#risk-table tbody");
         const rows = (risk.items || []).slice(0, 50).map(item => {
@@ -1755,6 +1759,48 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         // Limpia detalle inicial
         renderGroupDetail((ops.groups || [])[0]?.group || "");
       }
+
+      function renderFilters(summary, current) {
+        const container = document.getElementById("risk-filters");
+        if (!container) return;
+        const buildSelect = (label, fieldKey, data) => {
+          const options = Object.keys(data || {}).sort();
+          const select = document.createElement("select");
+          const empty = document.createElement("option");
+          empty.value = "";
+          empty.textContent = label;
+          select.appendChild(empty);
+          options.forEach(opt => {
+            const op = document.createElement("option");
+            op.value = opt.startsWith("Sin ") ? "" : opt;
+            op.textContent = `${opt} (${data[opt]})`;
+            if ((current[fieldKey] || "").toLowerCase() === op.value.toLowerCase()) op.selected = true;
+            select.appendChild(op);
+          });
+          select.addEventListener("change", () => {
+            const filters = {
+              category: document.getElementById("f-category").value || undefined,
+              subcategory: document.getElementById("f-subcategory").value || undefined,
+              item: document.getElementById("f-item").value || undefined,
+              request_type: document.getElementById("f-request_type").value || undefined,
+              priority: document.getElementById("f-priority").value || undefined,
+            };
+            loadAll(filters).catch(console.error);
+          });
+          select.id = `f-${fieldKey}`;
+          select.className = "filter";
+          return select;
+        };
+        container.innerHTML = "";
+        container.style.display = "flex";
+        container.style.gap = "8px";
+        container.appendChild(buildSelect("Categoría", "category", summary.categories || {}));
+        container.appendChild(buildSelect("Subcategoría", "subcategory", summary.subcategories || {}));
+        container.appendChild(buildSelect("Item", "item", summary.items || {}));
+        container.appendChild(buildSelect("Tipo", "request_type", summary.request_types || {}));
+        container.appendChild(buildSelect("Prioridad", "priority", summary.priorities || {}));
+      }
+
       loadAll().catch(err => console.error(err));
     </script>
   </body>
