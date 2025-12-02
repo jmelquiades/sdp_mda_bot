@@ -1978,19 +1978,34 @@ RISK_TEMPLATE = """<!DOCTYPE html>
               if (!detail) return;
               if (!group) { detail.innerHTML = ""; return; }
               const tickets = group.tickets || [];
-              const techCounts = {};
-              tickets.forEach(item => {
+              const riskyTickets = tickets.filter(item => {
                 const band = item.risk_band;
-                if (band !== "rojo" && band !== "naranja") return;
+                return band === "rojo" || band === "naranja";
+              });
+              const techCounts = {};
+              riskyTickets.forEach(item => {
                 const key = item.technician_name || item.technician_id || "sin técnico";
                 techCounts[key] = (techCounts[key] || 0) + 1;
               });
-              const techHtml = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([tech,count])=>`<span class="badge">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
-              const rows = tickets.slice(0,30).map(item => {
-                const band=item.risk_band||"verde"; const link=item.ticket_link?`<a href=\"${item.ticket_link}\" target=\"_blank\">Abrir</a>`:"-";
-                return `<tr><td>#${item.ticket_id}</td><td>${fmtName(item.technician||item.technician_name||item.technician_id||'')}</td><td>${buildRiskCell(item.ratio, band)}</td><td>${item.threshold_days||"-"}</td><td>${link}</td></tr>`;
-              }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
-              detail.innerHTML = `<h4>Detalle de ${g}</h4><div class="detail-block">Técnicos más expuestos: ${techHtml}</div><table><thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+              const topTechs = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+              const techHtml = topTechs.map(([tech,count])=>`<span class="badge tech-pill" data-tech="${tech}">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
+              const renderRows = (list, technicianFilter) => {
+                const source = technicianFilter ? list.filter(item => (item.technician_name || item.technician_id || "").toLowerCase() === technicianFilter.toLowerCase()) : list;
+                return source.map(item => {
+                  const band=item.risk_band||"verde"; const link=item.ticket_link?`<a href=\"${item.ticket_link}\" target=\"_blank\">Abrir</a>`:"-";
+                  return `<tr><td>#${item.ticket_id}</td><td>${fmtName(item.technician||item.technician_name||item.technician_id||'')}</td><td>${buildRiskCell(item.ratio, band)}</td><td>${item.threshold_days||"-"}</td><td>${link}</td></tr>`;
+                }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
+              };
+              detail.innerHTML = `<h4>Detalle de ${g}</h4><div class="detail-block">Técnicos más expuestos: ${techHtml}</div><div class="detail-block small muted">Click en un técnico para filtrar los tickets.</div><table><thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead><tbody>${renderRows(riskyTickets)}</tbody></table>`;
+              detail.querySelectorAll(".tech-pill").forEach(pill => {
+                pill.style.cursor = "pointer";
+                pill.addEventListener("click", () => {
+                  const tech = pill.getAttribute("data-tech") || "";
+                  detail.querySelector("tbody").innerHTML = renderRows(riskyTickets, tech);
+                  detail.querySelectorAll(".tech-pill").forEach(el => el.classList.remove("pill", "azul"));
+                  pill.classList.add("pill", "azul");
+                });
+              });
             });
         });
       }
