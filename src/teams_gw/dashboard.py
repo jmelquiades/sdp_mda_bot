@@ -1668,6 +1668,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <thead><tr><th>Grupo</th><th>Riesgo alto</th><th>Total</th></tr></thead>
             <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
           </table>
+          <div id="group-detail"></div>
         </div>
       </div>
     </div>
@@ -1685,12 +1686,54 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         return base.split(" ").map(w => w ? w[0].toUpperCase()+w.slice(1) : "").join(" ").trim();
       };
       const baseUrl = window.location.origin;
+      let opsData = null;
+
+      function renderGroupDetail(groupName) {
+        const container = document.getElementById("group-detail");
+        if (!container) return;
+        const group = (opsData?.groups || []).find(g => (g.group || "").toLowerCase() === groupName.toLowerCase());
+        if (!group) {
+          container.innerHTML = "";
+          return;
+        }
+        const tickets = group.tickets || [];
+        const rows = tickets.slice(0, 30).map(item => {
+          const band = item.risk_band || "verde";
+          const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
+          return `<tr>
+            <td>#${item.ticket_id || "-"}</td>
+            <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
+            <td><span class="pill ${band}">${Math.round((item.ratio || 0)*100)}%</span></td>
+            <td>${item.threshold_days || "-"}</td>
+            <td>${link}</td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
+        // Top técnicos en riesgo alto
+        const techCounts = {};
+        tickets.forEach(item => {
+          const band = item.risk_band;
+          if (band !== "rojo" && band !== "naranja") return;
+          const key = item.technician_name || item.technician_id || "sin técnico";
+          techCounts[key] = (techCounts[key] || 0) + 1;
+        });
+        const topTech = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        const techHtml = topTech.map(([tech,count])=>`<span class="badge">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
+        container.innerHTML = `
+          <h4>Detalle de ${group.group}</h4>
+          <div style="margin: 6px 0 10px;">Técnicos más expuestos: ${techHtml}</div>
+          <table>
+            <thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
       async function loadAll() {
         const [risk, runs, ops] = await Promise.all([
           fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/runs").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []}))
         ]);
+        opsData = ops;
         document.getElementById("last-updated").textContent = "Actualizado " + fmtDate(new Date().toISOString());
 
         const riskBody = document.querySelector("#risk-table tbody");
@@ -1723,8 +1766,17 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         groupsBody.innerHTML = (ops.groups || []).slice(0,8).map(g => {
           const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
           const total = Object.values(g.bands || {}).reduce((a,b)=>a+ (b||0),0);
-          return `<tr><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
+          return `<tr data-group="${g.group}"><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
         }).join("") || `<tr><td colspan="3" class="muted">Sin datos de grupos.</td></tr>`;
+        groupsBody.querySelectorAll("tr[data-group]").forEach(row => {
+          row.style.cursor = "pointer";
+          row.addEventListener("click", () => {
+            const g = row.getAttribute("data-group");
+            renderGroupDetail(g);
+          });
+        });
+        // Limpia detalle inicial
+        renderGroupDetail((ops.groups || [])[0]?.group || "");
       }
       loadAll().catch(err => console.error(err));
     </script>
