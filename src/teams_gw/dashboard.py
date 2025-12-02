@@ -1627,7 +1627,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       .tab.active { background: #0f172a; color: #f8fafc; box-shadow: 0 10px 22px rgba(15,23,42,0.25); }
       .grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 1fr;
         gap: 12px;
       }
       .card {
@@ -1773,10 +1773,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Grupo</th><th>Riesgo</th><th>Umbral</th><th></th>
+                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Riesgo</th><th>Umbral</th><th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
         <div class="card">
@@ -1892,11 +1892,12 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
             <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
+            <td>${item.subject || "-"}</td>
             <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
+        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets en riesgo.</td></tr>`;
         const techCounts = {};
         tickets.forEach(item => {
           const band = item.risk_band;
@@ -1910,7 +1911,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <h4>Detalle de ${group.group}</h4>
           <div class="detail-block">Técnicos más expuestos: ${techHtml}</div>
           <table>
-            <thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead>
+            <thead><tr><th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         `;
@@ -1934,12 +1935,13 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
             <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
+            <td>${item.subject || "-"}</td>
             <td>${item.group || "-"}</td>
             <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets en riesgo.</td></tr>`;
+        }).join("") || `<tr><td colspan="7" class="muted">Sin tickets en riesgo.</td></tr>`;
         riskBody.innerHTML = rows;
 
         const groupsBody = document.querySelector("#groups-table tbody");
