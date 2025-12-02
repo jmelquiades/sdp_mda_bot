@@ -1983,14 +1983,21 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 return band === "rojo" || band === "naranja";
               });
               const techCounts = {};
+              const pickTechKey = (item) =>
+                (item.technician_name && item.technician_name.trim()) ||
+                (item.technician && item.technician.trim()) ||
+                (item.technician_id && item.technician_id.toString().trim()) ||
+                "sin técnico";
               riskyTickets.forEach(item => {
-                const key = item.technician_name || item.technician_id || "sin técnico";
+                const key = pickTechKey(item);
                 techCounts[key] = (techCounts[key] || 0) + 1;
               });
-              const topTechs = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-              const techHtml = topTechs.map(([tech,count])=>`<span class="badge tech-pill" data-tech="${tech}">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
+              const allTechs = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]);
+              const techHtml = allTechs.map(([tech,count])=>`<span class="badge tech-pill" data-tech="${tech}">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
               const renderRows = (list, technicianFilter) => {
-                const source = technicianFilter ? list.filter(item => (item.technician_name || item.technician_id || "").toLowerCase() === technicianFilter.toLowerCase()) : list;
+                const source = technicianFilter
+                  ? list.filter(item => pickTechKey(item).toLowerCase() === technicianFilter.toLowerCase())
+                  : list;
                 return source.map(item => {
                   const band=item.risk_band||"verde"; const link=item.ticket_link?`<a href=\"${item.ticket_link}\" target=\"_blank\">Abrir</a>`:"-";
                   return `<tr><td>#${item.ticket_id}</td><td>${fmtName(item.technician||item.technician_name||item.technician_id||'')}</td><td>${buildRiskCell(item.ratio, band)}</td><td>${item.threshold_days||"-"}</td><td>${link}</td></tr>`;
