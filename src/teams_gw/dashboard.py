@@ -2043,13 +2043,18 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           empty.value = "";
           empty.textContent = `Seleccionar ${label.toLowerCase()}`;
           select.appendChild(empty);
-          Object.keys(data||{}).sort().forEach(opt=>{
-            const op=document.createElement("option");
-            op.value=opt.startsWith("Sin ")? "":opt;
-            op.textContent=`${opt} (${data[opt]})`;
-            if ((filters[fieldKey]||"").toLowerCase() === op.value.toLowerCase()) op.selected=true;
-            select.appendChild(op);
-          });
+          Object.keys(data || {})
+            .sort()
+            .forEach((opt) => {
+              const op = document.createElement("option");
+              op.value = opt.startsWith("Sin ") ? "" : opt;
+              op.textContent = `${opt} (${data[opt]})`;
+              const currentVal = filters[fieldKey] || "";
+              if (currentVal && currentVal.toLowerCase() === op.value.toLowerCase()) {
+                op.selected = true;
+              }
+              select.appendChild(op);
+            });
           select.addEventListener("change", ()=>{
             const newFilters = {
               threshold: currentThreshold(),
@@ -2067,12 +2072,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const baseItems = risk.items || [];
         const currentCategory = filters.category ? filters.category.toLowerCase() : "";
         const currentSubcategory = filters.subcategory ? filters.subcategory.toLowerCase() : "";
+        const categoriesCounts = {};
         const filteredSubcats = {};
         const filteredItems = {};
         baseItems.forEach((item) => {
           const cat = item.category || "Sin categoría";
           const sub = item.subcategory || "Sin subcategoría";
           const it = item.item || "Sin item";
+          categoriesCounts[cat] = (categoriesCounts[cat] || 0) + 1;
           if (!filters.category || cat.toLowerCase() === currentCategory) {
             filteredSubcats[sub] = (filteredSubcats[sub] || 0) + 1;
             if (!filters.subcategory || sub.toLowerCase() === currentSubcategory) {
@@ -2080,7 +2087,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             }
           }
         });
-        serviceFilters.appendChild(makeSelect("Categoría", "category", summary.categories||{}));
+        serviceFilters.appendChild(makeSelect("Categoría", "category", categoriesCounts));
         serviceFilters.appendChild(makeSelect("Subcategoría", "subcategory", filteredSubcats));
         serviceFilters.appendChild(makeSelect("Item", "item", filteredItems));
         serviceFilters.appendChild(makeSelect("Tipo", "request_type", summary.request_types||{}));
