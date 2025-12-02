@@ -1549,53 +1549,212 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       :root {
         color-scheme: light;
         font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #f6f8fb;
+        background: #eef2ff;
       }
       body {
         margin: 0;
-        background: radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.08), transparent 28%),
-                    radial-gradient(circle at 82% 12%, rgba(16, 185, 129, 0.1), transparent 26%),
-                    #f6f8fb;
+        background:
+          radial-gradient(circle at 15% 20%, rgba(79, 70, 229, 0.12), transparent 30%),
+          radial-gradient(circle at 80% 10%, rgba(16, 185, 129, 0.15), transparent 28%),
+          linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
         color: #0f172a;
       }
-@@
-      h1 { margin: 0; font-size: 26px; color: #0f172a; }
-      .muted { color: #4b5563; }
-@@
+      .shell {
+        max-width: 1260px;
+        margin: 0 auto;
+        padding: 28px 18px 80px;
+      }
+      h1 { margin: 0; font-size: 28px; color: #0f172a; }
+      h3 { margin: 0 0 6px; color: #0f172a; }
+      .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; color: #6366f1; margin: 0 0 6px; font-weight: 700; }
+      .muted { color: #4b5563; margin: 0; }
+      .small { font-size: 12px; }
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .hero-card {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 16px 18px;
+        border-radius: 14px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.28);
+        min-width: 240px;
+      }
+      .hero-number { font-size: 24px; font-weight: 700; margin: 4px 0; }
+      .band-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin: 12px 0 18px;
+      }
+      .kpi-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 14px 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+      }
+      .kpi-card .label { margin: 0; color: #475569; font-size: 13px; }
+      .kpi-value { font-size: 26px; font-weight: 700; margin: 8px 0 4px; }
+      .accent-red { border-color: #fecdd3; box-shadow: 0 10px 26px rgba(248, 113, 113, 0.18); }
+      .accent-amber { border-color: #fde68a; box-shadow: 0 10px 26px rgba(251, 191, 36, 0.16); }
+      .accent-green { border-color: #bbf7d0; box-shadow: 0 10px 26px rgba(34, 197, 94, 0.14); }
+      .accent-indigo { border-color: #c7d2fe; box-shadow: 0 10px 26px rgba(99, 102, 241, 0.14); }
+      .tabs {
+        display: inline-flex;
+        gap: 8px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        margin: 8px 0 16px;
+      }
+      .tab {
+        border: none;
+        background: transparent;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        color: #475569;
+        cursor: pointer;
+      }
+      .tab.active { background: #0f172a; color: #f8fafc; box-shadow: 0 10px 22px rgba(15,23,42,0.25); }
+      .grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 12px;
+      }
       .card {
         background: #ffffff;
         border: 1px solid #e5e7eb;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 16px;
-        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
       }
-@@
-      th { text-align: left; color: #475569; border-bottom: 1px solid #e5e7eb; }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+      .filters select {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 6px 10px;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      th { text-align: left; color: #475569; border-bottom: 1px solid #e5e7eb; font-size: 13px; font-weight: 600; padding: 10px 8px; }
+      td { padding: 10px 8px; font-size: 13px; color: #0f172a; }
       tr + tr td { border-top: 1px solid #e5e7eb; }
-@@
+      tr:hover td { background: #f8fafc; }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .pill-sm { padding: 4px 8px; font-weight: 600; }
+      .pill.rojo { background: #fee2e2; color: #991b1b; }
+      .pill.naranja { background: #ffedd5; color: #c2410c; }
+      .pill.amarillo { background: #fef9c3; color: #854d0e; }
+      .pill.verde { background: #dcfce7; color: #166534; }
+      .pill.azul { background: #e0e7ff; color: #312e81; }
       .badge {
         padding: 4px 8px;
         border-radius: 10px;
         background: #e5e7eb;
         color: #0f172a;
         font-size: 12px;
+        font-weight: 600;
       }
-      a { color: #1d4ed8; text-decoration: none; }
+      .meter {
+        position: relative;
+        height: 8px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .meter-fill {
+        height: 100%;
+        border-radius: 999px;
+        display: block;
+      }
+      .fill-rojo { background: linear-gradient(90deg, #ef4444, #b91c1c); }
+      .fill-naranja { background: linear-gradient(90deg, #f59e0b, #d97706); }
+      .fill-amarillo { background: linear-gradient(90deg, #facc15, #eab308); }
+      .fill-verde { background: linear-gradient(90deg, #34d399, #059669); }
+      .risk-cell { display: flex; flex-direction: column; gap: 4px; }
+      .detail-block { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #f8fafc; border: 1px dashed #e5e7eb; }
+      a { color: #1d4ed8; text-decoration: none; font-weight: 600; }
       a:hover { text-decoration: underline; }
-      @media (max-width: 960px) {
+      @media (max-width: 1024px) {
         .grid { grid-template-columns: 1fr; }
+        .hero { flex-direction: column; }
+        .hero-card { width: 100%; }
       }
     </style>
   </head>
   <body>
     <div class="shell">
-      <header>
+      <div class="hero">
         <div>
+          <p class="eyebrow">Controller SDP</p>
           <h1>Riesgo y Corridas</h1>
-          <p class="muted">Vista rápida de tickets cerca de umbral y grupos con mayor riesgo</p>
+          <p class="muted">Visión rápida de tickets cerca de umbral y grupos con mayor exposición.</p>
+          <div class="band-pills" id="band-pills">
+            <span class="pill pill-sm rojo">Alto 0</span>
+            <span class="pill pill-sm naranja">Medio 0</span>
+            <span class="pill pill-sm amarillo">Seguimiento 0</span>
+            <span class="pill pill-sm verde">Sano 0</span>
+          </div>
         </div>
-        <div id="last-updated" class="muted"></div>
-      </header>
+        <div class="hero-card">
+          <p class="small muted">Última actualización</p>
+          <div class="hero-number" id="last-updated">-</div>
+          <p class="small muted">Sincronizado con controller</p>
+        </div>
+      </div>
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card accent-red">
+          <p class="label">Riesgo alto</p>
+          <div class="kpi-value" id="kpi-high">-</div>
+          <p class="muted small">Tickets en rojo y naranja</p>
+        </div>
+        <div class="kpi-card accent-amber">
+          <p class="label">En seguimiento</p>
+          <div class="kpi-value" id="kpi-mid">-</div>
+          <p class="muted small">Cerca al umbral activo</p>
+        </div>
+        <div class="kpi-card accent-green">
+          <p class="label">Estables</p>
+          <div class="kpi-value" id="kpi-low">-</div>
+          <p class="muted small">Tickets verdes</p>
+        </div>
+        <div class="kpi-card accent-indigo">
+          <p class="label">Grupos en riesgo</p>
+          <div class="kpi-value" id="kpi-groups">-</div>
+          <p class="muted small">Con al menos 1 ticket rojo/naranja</p>
+        </div>
+      </div>
       <div class="tabs" id="view-tabs">
         <button class="tab active" data-tab="tiempo">Tiempo</button>
         <button class="tab" data-tab="personas">Personas</button>
@@ -1603,8 +1762,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       </div>
       <div class="grid" id="grid-tiempo">
         <div class="card">
-          <h3>Tickets en mayor riesgo</h3>
-          <div class="filters" id="risk-filters"></div>
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Tiempo</p>
+              <h3>Tickets en mayor riesgo</h3>
+              <p class="muted small">Colorea porcentajes según banda de riesgo.</p>
+            </div>
+            <div class="filters" id="risk-filters"></div>
+          </div>
           <table id="risk-table">
             <thead>
               <tr>
@@ -1661,6 +1826,57 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       const baseUrl = window.location.origin;
       let opsData = null;
 
+      function summarizeRisk(items = []) {
+        const bands = { rojo: 0, naranja: 0, amarillo: 0, verde: 0 };
+        let ratioSum = 0;
+        items.forEach((item) => {
+          const band = item.risk_band || "verde";
+          bands[band] = (bands[band] || 0) + 1;
+          ratioSum += Math.max(0, Math.round((item.ratio || 0) * 100));
+        });
+        const total = items.length || 1;
+        return { bands, total: items.length, average: Math.round(ratioSum / total) || 0 };
+      }
+
+      function renderSummary(risk, ops) {
+        const items = risk.items || [];
+        const sum = summarizeRisk(items);
+        const groupsRisky = (ops.groups || []).filter((g) => (g.bands?.rojo || 0) + (g.bands?.naranja || 0) > 0).length;
+        const bandPills = document.getElementById("band-pills");
+        if (bandPills) {
+          bandPills.innerHTML = `
+            <span class="pill pill-sm rojo">Alto ${sum.bands.rojo}</span>
+            <span class="pill pill-sm naranja">Medio ${sum.bands.naranja}</span>
+            <span class="pill pill-sm amarillo">Seguimiento ${sum.bands.amarillo}</span>
+            <span class="pill pill-sm verde">Sano ${sum.bands.verde}</span>
+          `;
+        }
+        const kpi = document.getElementById("kpi-grid");
+        if (kpi) {
+          kpi.querySelector("#kpi-high").textContent = (sum.bands.rojo + sum.bands.naranja) || 0;
+          kpi.querySelector("#kpi-mid").textContent = sum.bands.amarillo || 0;
+          kpi.querySelector("#kpi-low").textContent = sum.bands.verde || 0;
+          kpi.querySelector("#kpi-groups").textContent = groupsRisky || 0;
+        }
+      }
+
+      const buildRiskCell = (ratio, band) => {
+        const pct = Math.min(100, Math.round((ratio || 0) * 100));
+        const bandClass = band || "verde";
+        const fillClass = {
+          rojo: "fill-rojo",
+          naranja: "fill-naranja",
+          amarillo: "fill-amarillo",
+          verde: "fill-verde",
+        }[bandClass] || "fill-verde";
+        return `
+          <div class="risk-cell">
+            <span class="pill pill-sm ${bandClass}">${pct}%</span>
+            <div class="meter"><span class="meter-fill ${fillClass}" style="width:${pct}%"></span></div>
+          </div>
+        `;
+      };
+
       function renderGroupDetail(groupName) {
         const container = document.getElementById("group-detail");
         if (!container) return;
@@ -1676,12 +1892,11 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
             <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
-            <td><span class="pill ${band}">${Math.round((item.ratio || 0)*100)}%</span></td>
+            <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
         }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
-        // Top técnicos en riesgo alto
         const techCounts = {};
         tickets.forEach(item => {
           const band = item.risk_band;
@@ -1693,7 +1908,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const techHtml = topTech.map(([tech,count])=>`<span class="badge">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
         container.innerHTML = `
           <h4>Detalle de ${group.group}</h4>
-          <div style="margin: 6px 0 10px;">Técnicos más expuestos: ${techHtml}</div>
+          <div class="detail-block">Técnicos más expuestos: ${techHtml}</div>
           <table>
             <thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead>
             <tbody>${rows}</tbody>
@@ -1708,7 +1923,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           fetch(baseUrl + "/dashboard/data/risk/summary").then(r => r.json()).catch(() => ({})),
         ]);
         opsData = ops;
-        document.getElementById("last-updated").textContent = "Actualizado " + fmtDate(new Date().toISOString());
+        document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
+        renderSummary(risk, ops);
         renderFilters(summary, filters);
 
         const riskBody = document.querySelector("#risk-table tbody");
@@ -1719,7 +1935,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>#${item.ticket_id || "-"}</td>
             <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
             <td>${item.group || "-"}</td>
-            <td><span class="pill ${band}">${Math.round((item.ratio || 0)*100)}%</span></td>
+            <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
@@ -1739,7 +1955,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             renderGroupDetail(g);
           });
         });
-        // Limpia detalle inicial
         renderGroupDetail((ops.groups || [])[0]?.group || "");
         renderPersonas(ops);
         renderServicios(risk, filters, summary);
@@ -1813,9 +2028,9 @@ RISK_TEMPLATE = """<!DOCTYPE html>
               const techHtml = Object.entries(techCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([tech,count])=>`<span class="badge">${fmtName(tech)} · ${count}</span>`).join(" ") || "<span class='muted'>Sin técnicos en riesgo alto.</span>";
               const rows = tickets.slice(0,30).map(item => {
                 const band=item.risk_band||"verde"; const link=item.ticket_link?`<a href=\"${item.ticket_link}\" target=\"_blank\">Abrir</a>`:"-";
-                return `<tr><td>#${item.ticket_id}</td><td>${fmtName(item.technician||item.technician_name||item.technician_id||'')}</td><td><span class=\"pill ${band}\">${Math.round((item.ratio||0)*100)}%</span></td><td>${item.threshold_days||"-"}</td><td>${link}</td></tr>`;
+                return `<tr><td>#${item.ticket_id}</td><td>${fmtName(item.technician||item.technician_name||item.technician_id||'')}</td><td>${buildRiskCell(item.ratio, band)}</td><td>${item.threshold_days||"-"}</td><td>${link}</td></tr>`;
               }).join("") || `<tr><td colspan="5" class="muted">Sin tickets en riesgo.</td></tr>`;
-              detail.innerHTML = `<h4>Detalle de ${g}</h4><div style="margin:6px 0 10px;">Técnicos más expuestos: ${techHtml}</div><table><thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+              detail.innerHTML = `<h4>Detalle de ${g}</h4><div class="detail-block">Técnicos más expuestos: ${techHtml}</div><table><thead><tr><th>Ticket</th><th>Técnico</th><th>Riesgo</th><th>Umbral</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
             });
         });
       }
@@ -1831,7 +2046,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${item.category || "-"}</td>
             <td>${item.subcategory || "-"}</td>
             <td>${item.item || "-"}</td>
-            <td><span class="pill ${band}">${Math.round((item.ratio || 0)*100)}%</span></td>
+            <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${link}</td>
           </tr>`;
         }).join("") || `<tr><td colspan="6" class="muted">Sin tickets filtrados.</td></tr>`;
@@ -1839,7 +2054,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
         serviceFilters.innerHTML = "";
-        // Reuse same selects for servicios tab
         const makeSelect = (label, fieldKey, data) => {
           const select = document.createElement("select");
           select.className = "filter";
@@ -1874,7 +2088,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         serviceFilters.appendChild(makeSelect("Prioridad", "priority", summary.priorities||{}));
       }
 
-      // Tabs logic
       const tabs = document.getElementById("view-tabs");
       if (tabs) {
         tabs.querySelectorAll(".tab").forEach(btn => {
