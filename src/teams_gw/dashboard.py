@@ -82,6 +82,14 @@ async def fetch_controller_metrics(url: str) -> Dict[str, Any]:
             return await response.json()
 
 
+async def fetch_controller_generic(url: str) -> Dict[str, Any]:
+    timeout = aiohttp.ClientTimeout(total=10)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(url) as response:
+            response.raise_for_status()
+            return await response.json()
+
+
 def build_dashboard_payload(raw: Dict[str, Any], allowed_roles: List[str]) -> Dict[str, Any]:
     levels = raw.get("levels") or {}
     notifications = raw.get("recent_notifications") or []

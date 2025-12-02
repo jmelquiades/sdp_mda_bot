@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     CONTROLLER_METRICS_URL: str = Field(
         default="https://criteriat-sdp-mda-controller.onrender.com/controller/metrics"
     )
+    CONTROLLER_BASE_URL: Optional[str] = Field(default=None)
     DASHBOARD_ROLES: str = Field(
         default="supervisor,jefe_operacion,jefe_servicios,gerente"
     )

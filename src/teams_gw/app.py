@@ -30,6 +30,7 @@ from .cards import build_alert_card
 from .conversation_store import conversation_store
 from .dashboard import (
     build_dashboard_payload,
+    fetch_controller_generic,
     fetch_controller_metrics,
     normalize_roles,
     render_dashboard_html,
@@ -353,6 +354,37 @@ async def dashboard_data():
         log.error("Error consulting controller metrics: %s", exc)
         raise HTTPException(status_code=502, detail="controller_metrics_unavailable")
     return build_dashboard_payload(raw, ACTIVE_DASHBOARD_ROLES)
+
+
+def _controller_base_url() -> str:
+    if settings.CONTROLLER_BASE_URL:
+        return settings.CONTROLLER_BASE_URL.rstrip("/")
+    # Derivar base removiendo el último segmento de metrics
+    url = settings.CONTROLLER_METRICS_URL.rstrip("/")
+    parts = url.rsplit("/", 1)
+    return parts[0] if len(parts) == 2 else url
+
+
+@app.get("/dashboard/data/risk")
+async def dashboard_risk():
+    base = _controller_base_url()
+    url = f"{base}/risk"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller risk: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_risk_unavailable")
+
+
+@app.get("/dashboard/data/runs")
+async def dashboard_runs():
+    base = _controller_base_url()
+    url = f"{base}/runs"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller runs: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_runs_unavailable")
 
 @app.get("/__bf-token")
 async def bf_token():
