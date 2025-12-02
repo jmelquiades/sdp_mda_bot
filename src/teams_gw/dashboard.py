@@ -1796,8 +1796,20 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <h3>Servicios con más riesgo</h3>
           <div class="filters" id="service-filters"></div>
           <table id="service-table">
-            <thead><tr><th>Ticket</th><th>Categoría</th><th>Subcategoría</th><th>Item</th><th>Riesgo</th><th></th></tr></thead>
-            <tbody><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Asunto</th>
+                <th>Solicitante</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th>Item</th>
+                <th>Riesgo</th>
+                <th>Umbral</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
