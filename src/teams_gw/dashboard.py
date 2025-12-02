@@ -673,21 +673,39 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 
       function formatTechnician(value) {
         if (!value) return "-";
-        if (typeof value === "string") {
-          if (value.includes("@")) {
-            const user = value.split("@")[0];
-            const cleaned = user.replace(/[._]/g, " ").replace(/\s+/g, " ").trim();
-            if (cleaned) {
-              return cleaned
-                .split(" ")
-                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                .join(" ");
-            }
-          }
-          return value;
+        const formatString = (text) => {
+          const raw = (text || "").toString();
+          if (!raw) return "";
+          const base = raw.includes("@") ? raw.split("@")[0] : raw;
+          const cleaned = base.replace(/[._]/g, " ").replace(/\s+/g, " ").trim();
+          if (!cleaned) return raw;
+          return cleaned
+            .split(" ")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ");
+        };
+
+        if (typeof value === "string" || typeof value === "number") {
+          return formatString(value);
         }
-        if (value.name) return value.name;
-        if (value.display) return value.display;
+
+        if (typeof value === "object") {
+          const candidates = [
+            value.name,
+            value.display,
+            value.technician,
+            value.technician_name,
+            value.technician_id,
+            value.email,
+            value.mail,
+            value.user,
+            value.username,
+          ].filter(Boolean);
+          if (candidates.length) {
+            return formatString(candidates[0]);
+          }
+        }
+
         return value.toString();
       }
 
