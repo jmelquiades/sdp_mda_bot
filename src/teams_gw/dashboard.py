@@ -1646,7 +1646,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         gap: 10px;
         align-items: flex-start;
       }
-      .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+      .filters { display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1000; overflow: visible; }
       .filters select {
         border: 1px solid #e5e7eb;
         border-radius: 10px;
@@ -1654,9 +1654,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         background: #f8fafc;
         color: #0f172a;
         position: relative;
-        z-index: 25;
+        z-index: 1001;
       }
-      .filters { position: relative; z-index: 20; }
       table {
         width: 100%;
         border-collapse: collapse;
