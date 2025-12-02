@@ -392,6 +392,16 @@ async def dashboard_runs():
         log.error("Error consulting controller runs: %s", exc)
         raise HTTPException(status_code=502, detail="controller_runs_unavailable")
 
+@app.get("/dashboard/data/risk/summary")
+async def dashboard_risk_summary():
+    base = _controller_base_url()
+    url = f"{base}/risk/summary"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller risk summary: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_risk_summary_unavailable")
+
 
 @app.get("/dashboard/data/operations")
 async def dashboard_operations():
