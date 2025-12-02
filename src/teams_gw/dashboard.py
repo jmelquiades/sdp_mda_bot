@@ -1654,8 +1654,9 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         background: #f8fafc;
         color: #0f172a;
         position: relative;
-        z-index: 2;
+        z-index: 25;
       }
+      .filters { position: relative; z-index: 20; }
       table {
         width: 100%;
         border-collapse: collapse;
