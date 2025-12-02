@@ -620,6 +620,37 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
           grid-template-columns: 1fr;
         }
       }
+      /* Override a dark theme consistent with /dashboard/risk */
+      body {
+        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 25%),
+                    radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.14), transparent 22%),
+                    #0b1224;
+        color: #e2e8f0;
+      }
+      .card,
+      .role-panel,
+      .notification-card,
+      .insight-card {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      }
+      .level-card {
+        background: #1e293b;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+      }
+      header h1, h2, h3, h4, h5, h6 { color: #f8fafc; }
+      .muted, p, .role-header p, th { color: #cbd5e1; }
+      .tabs .tab { background: #1e293b; color: #e2e8f0; }
+      .tabs .tab.active { background: #1d4ed8; color: #f8fafc; box-shadow: 0 8px 18px rgba(0,0,0,0.35); }
+      a.action-link { color: #60a5fa; }
+      .badge { background: rgba(148, 163, 184, 0.2); color: #e2e8f0; }
+      table tr + tr td { border-top: 1px solid rgba(148, 163, 184, 0.2); }
+      .last-check-card {
+        background: rgba(15,23,42,0.85);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        color: #e2e8f0;
+      }
       /* Ajuste para contenedores embebidos (Teams) */
       @media (max-width: 1180px) {
         .summary-grid {
