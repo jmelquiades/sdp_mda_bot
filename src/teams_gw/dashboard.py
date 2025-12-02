@@ -184,6 +184,10 @@ def render_service_dashboard_html() -> HTMLResponse:
     return HTMLResponse(html)
 
 
+def render_risk_dashboard_html() -> HTMLResponse:
+    return HTMLResponse(RISK_TEMPLATE)
+
+
 ROWS_FOOTER = ""
 
 DASHBOARD_TEMPLATE = """<!DOCTYPE html>
@@ -1503,6 +1507,195 @@ SERVICE_TEMPLATE = """<!DOCTYPE html>
       }
 
       document.addEventListener("DOMContentLoaded", loadServiceData);
+    </script>
+  </body>
+</html>
+"""
+
+RISK_TEMPLATE = """<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Riesgo y Corridas</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0b1224;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12), transparent 25%),
+                    radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.14), transparent 22%),
+                    #0b1224;
+        color: #e2e8f0;
+      }
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 18px 64px;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 26px;
+        color: #f8fafc;
+      }
+      .muted { color: #94a3b8; }
+      .grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 16px;
+        margin-top: 18px;
+      }
+      .card {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 10px 8px;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        color: #94a3b8;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      tr + tr td {
+        border-top: 1px solid rgba(148, 163, 184, 0.14);
+      }
+      .pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 12px;
+        color: #0f172a;
+      }
+      .pill.verde { background: #bbf7d0; }
+      .pill.amarillo { background: #fef08a; }
+      .pill.naranja { background: #fdba74; }
+      .pill.rojo { background: #fca5a5; }
+      .badge {
+        padding: 4px 8px;
+        border-radius: 10px;
+        background: rgba(148, 163, 184, 0.15);
+        color: #e2e8f0;
+        font-size: 12px;
+      }
+      a { color: #60a5fa; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      @media (max-width: 960px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div>
+          <h1>Riesgo y Corridas</h1>
+          <p class="muted">Vista rápida de tickets cerca de umbral y grupos con mayor riesgo</p>
+        </div>
+        <div id="last-updated" class="muted"></div>
+      </header>
+      <div class="grid">
+        <div class="card">
+          <h3>Tickets en mayor riesgo</h3>
+          <table id="risk-table">
+            <thead>
+              <tr>
+                <th>Ticket</th><th>Técnico</th><th>Grupo</th><th>Riesgo</th><th>Umbral</th><th></th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Corridas recientes</h3>
+          <table id="runs-table">
+            <thead>
+              <tr><th>Inicio</th><th>Estado</th><th>Tickets</th><th>Alertas</th></tr>
+            </thead>
+            <tbody><tr><td colspan="4" class="muted">Cargando…</td></tr></tbody>
+          </table>
+          <h3 style="margin-top:18px;">Grupos con más riesgo</h3>
+          <table id="groups-table">
+            <thead><tr><th>Grupo</th><th>Riesgo alto</th><th>Total</th></tr></thead>
+            <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      const fmtDate = (val) => {
+        if (!val) return "-";
+        const iso = val.includes("Z") || /[+-]\\d{2}:?\\d{2}$/.test(val) ? val : val + "Z";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return val;
+        return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
+      };
+      const fmtName = (val) => {
+        if (!val) return "-";
+        const base = (val.includes("@") ? val.split("@")[0] : val).replace(/[._]/g, " ");
+        return base.split(" ").map(w => w ? w[0].toUpperCase()+w.slice(1) : "").join(" ").trim();
+      };
+      const baseUrl = window.location.origin;
+      async function loadAll() {
+        const [risk, runs, ops] = await Promise.all([
+          fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
+          fetch(baseUrl + "/dashboard/data/runs").then(r => r.json()),
+          fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []}))
+        ]);
+        document.getElementById("last-updated").textContent = "Actualizado " + fmtDate(new Date().toISOString());
+
+        const riskBody = document.querySelector("#risk-table tbody");
+        const rows = (risk.items || []).slice(0, 50).map(item => {
+          const band = item.risk_band || "verde";
+          const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
+          return `<tr>
+            <td>#${item.ticket_id || "-"}</td>
+            <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
+            <td>${item.group || "-"}</td>
+            <td><span class="pill ${band}">${Math.round((item.ratio || 0)*100)}%</span></td>
+            <td>${item.threshold_days || "-"}</td>
+            <td>${link}</td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets en riesgo.</td></tr>`;
+        riskBody.innerHTML = rows;
+
+        const runsBody = document.querySelector("#runs-table tbody");
+        runsBody.innerHTML = (runs.runs || []).slice(0,8).map(run => {
+          const pill = run.estado === "error" ? "pill rojo" : run.estado === "advertencia" ? "pill naranja" : "pill verde";
+          return `<tr>
+            <td>${fmtDate(run.fecha_inicio)}</td>
+            <td><span class="${pill}">${run.estado}</span></td>
+            <td>${run.tickets}</td>
+            <td>${run.alertas}</td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="4" class="muted">Sin corridas recientes.</td></tr>`;
+
+        const groupsBody = document.querySelector("#groups-table tbody");
+        groupsBody.innerHTML = (ops.groups || []).slice(0,8).map(g => {
+          const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
+          const total = Object.values(g.bands || {}).reduce((a,b)=>a+ (b||0),0);
+          return `<tr><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
+        }).join("") || `<tr><td colspan="3" class="muted">Sin datos de grupos.</td></tr>`;
+      }
+      loadAll().catch(err => console.error(err));
     </script>
   </body>
 </html>

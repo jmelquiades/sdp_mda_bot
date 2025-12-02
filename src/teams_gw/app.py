@@ -34,6 +34,7 @@ from .dashboard import (
     fetch_controller_metrics,
     normalize_roles,
     render_dashboard_html,
+    render_risk_dashboard_html,
     render_service_dashboard_html,
 )
 from .health import router as health_router
@@ -344,6 +345,11 @@ async def service_dashboard_page():
     return render_service_dashboard_html()
 
 
+@app.get("/dashboard/risk", response_class=HTMLResponse)
+async def risk_dashboard_page():
+    return render_risk_dashboard_html()
+
+
 @app.get("/dashboard/data")
 async def dashboard_data():
     if not settings.CONTROLLER_METRICS_URL:
@@ -385,6 +391,28 @@ async def dashboard_runs():
     except Exception as exc:
         log.error("Error consulting controller runs: %s", exc)
         raise HTTPException(status_code=502, detail="controller_runs_unavailable")
+
+
+@app.get("/dashboard/data/operations")
+async def dashboard_operations():
+    base = _controller_base_url()
+    url = f"{base}/operations"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller operations: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_operations_unavailable")
+
+
+@app.get("/dashboard/data/executive")
+async def dashboard_executive():
+    base = _controller_base_url()
+    url = f"{base}/executive"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller executive: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_executive_unavailable")
 
 @app.get("/__bf-token")
 async def bf_token():
