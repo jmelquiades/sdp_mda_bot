@@ -1945,8 +1945,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           const t = filters.threshold ? Number(filters.threshold) : null;
           const pt = filters.pause_threshold ? Number(filters.pause_threshold) : null;
           const pc = filters.pause_category ? String(filters.pause_category).toLowerCase() : "";
-          if (!t) return true;
-          const matchActive = Number(item.threshold_days || 0) === t;
+          const matchActive = t ? Number(item.threshold_days || 0) === t : true;
           const matchPause = pt ? Number(item.pause_threshold_days || 0) === pt : true;
           const matchPauseCat = pc ? (String(item.pause_category || "").toLowerCase() === pc) : true;
           return matchActive && matchPause && matchPauseCat;
