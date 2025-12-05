@@ -1891,7 +1891,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         }
       }
 
-      const buildRiskCell = (ratio, band, threshold) => {
+      const buildRiskCell = (ratio, band, threshold, days) => {
         const pct = Math.min(100, Math.round((ratio || 0) * 100));
         const bandClass = band || "verde";
         const fillClass = {
@@ -1900,11 +1900,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           amarillo: "fill-amarillo",
           verde: "fill-verde",
         }[bandClass] || "fill-verde";
+        const label = days && threshold
+          ? `${Number(days).toFixed(1)}d / ${threshold}d`
+          : (threshold ? `${threshold}d` : "-");
         return `
           <div class="risk-cell">
             <span class="pill pill-sm ${bandClass}">${pct}%</span>
             <div class="meter"><span class="meter-fill ${fillClass}" style="width:${pct}%"></span></div>
-            <span class="muted small">${threshold ? `${threshold}d` : "-"}</span>
+            <span class="muted small">${label}</span>
           </div>
         `;
       };
@@ -1971,7 +1974,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>#${item.ticket_id || "-"}</td>
             <td>${item.subject || "-"}</td>
             <td>${item.group || "-"}</td>
-            <td>${buildRiskCell(item.ratio, band, item.threshold_days)}</td>
+            <td>${buildRiskCell(item.ratio, band, item.threshold_days, item.active_days)}</td>
             <td>${pauseCell}</td>
             <td>${link}</td>
           </tr>`;
@@ -2136,7 +2139,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${item.category || "-"}</td>
             <td>${item.subcategory || "-"}</td>
             <td>${item.item || "-"}</td>
-            <td>${buildRiskCell(item.ratio, band, item.threshold_days)}</td>
+            <td>${buildRiskCell(item.ratio, band, item.threshold_days, item.active_days)}</td>
             <td>${pauseCell}</td>
             <td>${link}</td>
           </tr>`;
