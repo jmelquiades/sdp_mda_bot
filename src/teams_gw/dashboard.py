@@ -1799,7 +1799,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Umbral activo</th><th>Umbral pausa</th><th></th>
+                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo (umbral)</th><th>Pausa (categoría/umbral)</th><th></th>
               </tr>
             </thead>
             <tbody><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
@@ -1830,10 +1830,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
                 <th>Item</th>
-                <th>Activo</th>
-                <th>Pausa</th>
-                <th>Umbral activo</th>
-                <th>Umbral pausa</th>
+                <th>Activo (umbral)</th>
+                <th>Pausa (categoría/umbral)</th>
                 <th></th>
               </tr>
             </thead>
@@ -1893,7 +1891,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         }
       }
 
-      const buildRiskCell = (ratio, band) => {
+      const buildRiskCell = (ratio, band, threshold) => {
         const pct = Math.min(100, Math.round((ratio || 0) * 100));
         const bandClass = band || "verde";
         const fillClass = {
@@ -1906,13 +1904,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <div class="risk-cell">
             <span class="pill pill-sm ${bandClass}">${pct}%</span>
             <div class="meter"><span class="meter-fill ${fillClass}" style="width:${pct}%"></span></div>
+            <span class="muted small">${threshold ? `${threshold}d` : "-"}</span>
           </div>
         `;
       };
 
-      const buildPauseCell = (pauseRatio, pauseBand, pauseDays, pauseThreshold) => {
+      const buildPauseCell = (pauseRatio, pauseBand, pauseDays, pauseThreshold, pauseCategory) => {
         const hasPause = pauseThreshold && pauseThreshold > 0;
-        if (!hasPause) return `<span class="muted">-</span>`;
+        if (!hasPause) return `<span class="muted">Sin pausa</span>`;
         const pct = Math.min(100, Math.round((pauseRatio || 0) * 100));
         const bandClass = pauseBand || "verde";
         const fillClass = {
@@ -1924,6 +1923,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const label = pauseDays ? `${Number(pauseDays).toFixed(1)}d / ${pauseThreshold}d` : `${pauseThreshold}d`;
         return `
           <div class="risk-cell">
+            <span class="pill pill-sm ${bandClass}">${pauseCategory || "Pausa"}</span>
             <span class="pill pill-sm ${bandClass}">${pct}%</span>
             <div class="meter"><span class="meter-fill ${fillClass}" style="width:${pct}%"></span></div>
             <span class="muted small">${label}</span>
@@ -2141,7 +2141,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const rows = (risk.items || []).map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
-          const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days);
+          const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days, item.pause_category);
           return `<tr>
             <td class="subject-cell">#${item.ticket_id}</td>
             <td class="subject-cell">${item.subject || "-"}</td>
@@ -2149,13 +2149,11 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${item.category || "-"}</td>
             <td>${item.subcategory || "-"}</td>
             <td>${item.item || "-"}</td>
-            <td>${buildRiskCell(item.ratio, band)}</td>
+            <td>${buildRiskCell(item.ratio, band, item.threshold_days)}</td>
             <td>${pauseCell}</td>
-            <td>${item.threshold_days || "-"}</td>
-            <td>${item.pause_threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="11" class="muted">Sin tickets filtrados.</td></tr>`;
+        }).join("") || `<tr><td colspan="9" class="muted">Sin tickets filtrados.</td></tr>`;
         body.innerHTML = rows;
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
