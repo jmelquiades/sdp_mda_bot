@@ -1799,10 +1799,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Riesgo</th><th>Umbral</th><th></th>
+                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Riesgo</th><th>Pausa</th><th>Umbral</th><th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1831,11 +1831,12 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 <th>Subcategoría</th>
                 <th>Item</th>
                 <th>Riesgo</th>
+                <th>Pausa</th>
                 <th>Umbral</th>
                 <th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="10" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1908,6 +1909,27 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         `;
       };
 
+      const buildPauseCell = (pauseRatio, pauseBand, pauseDays, pauseThreshold) => {
+        const hasPause = pauseThreshold && pauseThreshold > 0;
+        if (!hasPause) return `<span class="muted">-</span>`;
+        const pct = Math.min(100, Math.round((pauseRatio || 0) * 100));
+        const bandClass = pauseBand || "verde";
+        const fillClass = {
+          rojo: "fill-rojo",
+          naranja: "fill-naranja",
+          amarillo: "fill-amarillo",
+          verde: "fill-verde",
+        }[bandClass] || "fill-verde";
+        const label = pauseDays ? `${Number(pauseDays).toFixed(1)}d / ${pauseThreshold}d` : `${pauseThreshold}d`;
+        return `
+          <div class="risk-cell">
+            <span class="pill pill-sm ${bandClass}">${pct}%</span>
+            <div class="meter"><span class="meter-fill ${fillClass}" style="width:${pct}%"></span></div>
+            <span class="muted small">${label}</span>
+          </div>
+        `;
+      };
+
       async function loadAll(filters = {}) {
         uiState.filters = { ...uiState.filters, ...filters };
         const [risk, ops, summary] = await Promise.all([
@@ -1931,16 +1953,18 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const rows = timeFiltered.map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
+          const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days);
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
             <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
             <td>${item.subject || "-"}</td>
             <td>${item.group || "-"}</td>
             <td>${buildRiskCell(item.ratio, band)}</td>
+            <td>${pauseCell}</td>
             <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="7" class="muted">Sin tickets en riesgo.</td></tr>`;
+        }).join("") || `<tr><td colspan="8" class="muted">Sin tickets en riesgo.</td></tr>`;
         riskBody.innerHTML = rows;
 
         renderPersonas(ops);
@@ -2070,6 +2094,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const rows = (risk.items || []).map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
+          const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days);
           return `<tr>
             <td class="subject-cell">#${item.ticket_id}</td>
             <td class="subject-cell">${item.subject || "-"}</td>
@@ -2078,10 +2103,11 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${item.subcategory || "-"}</td>
             <td>${item.item || "-"}</td>
             <td>${buildRiskCell(item.ratio, band)}</td>
+            <td>${pauseCell}</td>
             <td>${item.threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="9" class="muted">Sin tickets filtrados.</td></tr>`;
+        }).join("") || `<tr><td colspan="10" class="muted">Sin tickets filtrados.</td></tr>`;
         body.innerHTML = rows;
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
