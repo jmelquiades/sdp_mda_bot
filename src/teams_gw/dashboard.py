@@ -1799,10 +1799,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Umbral</th><th></th>
+                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Umbral</th><th>Umbral pausa</th><th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1833,10 +1833,11 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 <th>Activo</th>
                 <th>Pausa</th>
                 <th>Umbral</th>
+                <th>Umbral pausa</th>
                 <th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="10" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="11" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1975,9 +1976,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${pauseCell}</td>
             <td>${item.threshold_days || "-"}</td>
+            <td>${item.pause_threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="8" class="muted">Sin tickets en riesgo.</td></tr>`;
+        }).join("") || `<tr><td colspan="9" class="muted">Sin tickets en riesgo.</td></tr>`;
         riskBody.innerHTML = rows;
 
         renderPersonas(ops);
@@ -2150,9 +2152,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${buildRiskCell(item.ratio, band)}</td>
             <td>${pauseCell}</td>
             <td>${item.threshold_days || "-"}</td>
+            <td>${item.pause_threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="10" class="muted">Sin tickets filtrados.</td></tr>`;
+        }).join("") || `<tr><td colspan="11" class="muted">Sin tickets filtrados.</td></tr>`;
         body.innerHTML = rows;
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
