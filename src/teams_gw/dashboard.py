@@ -1799,10 +1799,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo (umbral)</th><th>Pausa (categoría/umbral)</th><th></th>
+                <th>Ticket</th><th>Asunto</th><th>Grupo</th><th>Activo (umbral)</th><th>Pausa (categoría/umbral)</th><th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1967,19 +1967,16 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const rows = timeFiltered.map(item => {
           const band = item.risk_band || "verde";
           const link = item.ticket_link ? `<a href="${item.ticket_link}" target="_blank">Abrir</a>` : "-";
-          const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days);
+          const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days, item.pause_category);
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
-            <td>${fmtName(item.technician || item.technician_name || item.technician_id || "")}</td>
             <td>${item.subject || "-"}</td>
             <td>${item.group || "-"}</td>
-            <td>${buildRiskCell(item.ratio, band)}</td>
+            <td>${buildRiskCell(item.ratio, band, item.threshold_days)}</td>
             <td>${pauseCell}</td>
-            <td>${item.threshold_days || "-"}</td>
-            <td>${item.pause_threshold_days || "-"}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="9" class="muted">Sin tickets en riesgo.</td></tr>`;
+        }).join("") || `<tr><td colspan="6" class="muted">Sin tickets en riesgo.</td></tr>`;
         riskBody.innerHTML = rows;
 
         renderPersonas(ops);
