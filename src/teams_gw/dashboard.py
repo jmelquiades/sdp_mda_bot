@@ -1943,17 +1943,21 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const timeFiltered = items.filter((item) => {
           const t = filters.threshold ? Number(filters.threshold) : null;
           const pt = filters.pause_threshold ? Number(filters.pause_threshold) : null;
+          const pc = filters.pause_category ? String(filters.pause_category).toLowerCase() : "";
           if (!t) return true;
           const matchActive = Number(item.threshold_days || 0) === t;
           const matchPause = pt ? Number(item.pause_threshold_days || 0) === pt : true;
-          return matchActive && matchPause;
+          const matchPauseCat = pc ? (String(item.pause_category || "").toLowerCase() === pc) : true;
+          return matchActive && matchPause && matchPauseCat;
         });
         const serviceFiltered = items.filter((item) => {
           const t = filters.threshold ? Number(filters.threshold) : null;
           const pt = filters.pause_threshold ? Number(filters.pause_threshold) : null;
+          const pc = filters.pause_category ? String(filters.pause_category).toLowerCase() : "";
           const matchActive = t ? Number(item.threshold_days || 0) === t : true;
           const matchPause = pt ? Number(item.pause_threshold_days || 0) === pt : true;
-          return matchActive && matchPause && matchServiceFilters(item, filters);
+          const matchPauseCat = pc ? (String(item.pause_category || "").toLowerCase() === pc) : true;
+          return matchActive && matchPause && matchPauseCat && matchServiceFilters(item, filters);
         });
         renderSummary({ items: timeFiltered }, ops);
         renderFilters(summary, filters, items);
@@ -2035,6 +2039,15 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         };
         const activeOpts = makeOpts("threshold_days", "Umbral activo (todos)");
         const pauseOpts = makeOpts("pause_threshold_days", "Umbral pausa (todos)");
+        const pauseCatCounts = {};
+        riskItems.forEach((item) => {
+          const key = item.pause_category || "Sin categoría";
+          pauseCatCounts[key] = (pauseCatCounts[key] || 0) + 1;
+        });
+        const pauseCatOpts = Object.keys(pauseCatCounts)
+          .sort()
+          .map((val) => ({ value: val === "Sin categoría" ? "" : val, label: `${val} (${pauseCatCounts[val]})` }));
+        pauseCatOpts.unshift({ value: "", label: "Categoría pausa (todas)" });
         const dropdownActive = buildDropdown({
           placeholder: "Umbral activo (todos)",
           options: activeOpts,
@@ -2051,8 +2064,17 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             loadAll({ ...uiState.filters, pause_threshold: val || undefined }).catch(console.error);
           },
         });
+        const dropdownPauseCat = buildDropdown({
+          placeholder: "Categoría pausa (todas)",
+          options: pauseCatOpts,
+          selected: current.pause_category,
+          onSelect: (val) => {
+            loadAll({ ...uiState.filters, pause_category: val || undefined }).catch(console.error);
+          },
+        });
         container.appendChild(dropdownActive);
         container.appendChild(dropdownPause);
+        container.appendChild(dropdownPauseCat);
       }
 
       function renderPersonas(ops) {
