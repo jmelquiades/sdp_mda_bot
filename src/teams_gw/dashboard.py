@@ -1799,7 +1799,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Umbral</th><th>Umbral pausa</th><th></th>
+                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Umbral activo</th><th>Umbral pausa</th><th></th>
               </tr>
             </thead>
             <tbody><tr><td colspan="9" class="muted">Cargando…</td></tr></tbody>
@@ -1832,7 +1832,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 <th>Item</th>
                 <th>Activo</th>
                 <th>Pausa</th>
-                <th>Umbral</th>
+                <th>Umbral activo</th>
                 <th>Umbral pausa</th>
                 <th></th>
               </tr>
