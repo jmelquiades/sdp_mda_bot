@@ -1799,7 +1799,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           <table id="risk-table">
             <thead>
               <tr>
-                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Riesgo</th><th>Pausa</th><th>Umbral</th><th></th>
+                <th>Ticket</th><th>Técnico</th><th>Asunto</th><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Umbral</th><th></th>
               </tr>
             </thead>
             <tbody><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody>
@@ -1830,7 +1830,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
                 <th>Item</th>
-                <th>Riesgo</th>
+                <th>Activo</th>
                 <th>Pausa</th>
                 <th>Umbral</th>
                 <th></th>
@@ -1942,10 +1942,19 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         const items = risk.items || [];
         const timeFiltered = items.filter((item) => {
           const t = filters.threshold ? Number(filters.threshold) : null;
+          const pt = filters.pause_threshold ? Number(filters.pause_threshold) : null;
           if (!t) return true;
-          return Number(item.threshold_days || 0) === t;
+          const matchActive = Number(item.threshold_days || 0) === t;
+          const matchPause = pt ? Number(item.pause_threshold_days || 0) === pt : true;
+          return matchActive && matchPause;
         });
-        const serviceFiltered = items.filter((item) => matchServiceFilters(item, filters));
+        const serviceFiltered = items.filter((item) => {
+          const t = filters.threshold ? Number(filters.threshold) : null;
+          const pt = filters.pause_threshold ? Number(filters.pause_threshold) : null;
+          const matchActive = t ? Number(item.threshold_days || 0) === t : true;
+          const matchPause = pt ? Number(item.pause_threshold_days || 0) === pt : true;
+          return matchActive && matchPause && matchServiceFilters(item, filters);
+        });
         renderSummary({ items: timeFiltered }, ops);
         renderFilters(summary, filters, items);
 
@@ -2011,25 +2020,39 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         container.innerHTML = "";
         container.style.display = "flex";
         container.style.gap = "8px";
-        const thresholds = {};
-        riskItems.forEach((item) => {
-          const key = item.threshold_days || 0;
-          thresholds[key] = (thresholds[key] || 0) + 1;
-        });
-        const opts = Object.keys(thresholds)
-          .map(Number)
-          .sort((a, b) => a - b)
-          .map((val) => ({ value: String(val), label: `${val} días (${thresholds[val]})` }));
-        opts.unshift({ value: "", label: "Umbral (todos)" });
-        const dropdown = buildDropdown({
-          placeholder: "Umbral (todos)",
-          options: opts,
+        const makeOpts = (field, label) => {
+          const counts = {};
+          riskItems.forEach((item) => {
+            const key = item[field] || 0;
+            counts[key] = (counts[key] || 0) + 1;
+          });
+          const opts = Object.keys(counts)
+            .map(Number)
+            .sort((a, b) => a - b)
+            .map((val) => ({ value: String(val), label: `${val} días (${counts[val]})` }));
+          opts.unshift({ value: "", label });
+          return opts;
+        };
+        const activeOpts = makeOpts("threshold_days", "Umbral activo (todos)");
+        const pauseOpts = makeOpts("pause_threshold_days", "Umbral pausa (todos)");
+        const dropdownActive = buildDropdown({
+          placeholder: "Umbral activo (todos)",
+          options: activeOpts,
           selected: current.threshold,
           onSelect: (val) => {
             loadAll({ ...uiState.filters, threshold: val || undefined }).catch(console.error);
           },
         });
-        container.appendChild(dropdown);
+        const dropdownPause = buildDropdown({
+          placeholder: "Umbral pausa (todos)",
+          options: pauseOpts,
+          selected: current.pause_threshold,
+          onSelect: (val) => {
+            loadAll({ ...uiState.filters, pause_threshold: val || undefined }).catch(console.error);
+          },
+        });
+        container.appendChild(dropdownActive);
+        container.appendChild(dropdownPause);
       }
 
       function renderPersonas(ops) {
