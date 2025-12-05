@@ -2054,14 +2054,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             loadAll({ ...uiState.filters, threshold: val || undefined }).catch(console.error);
           },
         });
-        const dropdownPause = buildDropdown({
-          placeholder: "Umbral pausa (todos)",
-          options: pauseOpts,
-          selected: current.pause_threshold,
-          onSelect: (val) => {
-            loadAll({ ...uiState.filters, pause_threshold: val || undefined }).catch(console.error);
-          },
-        });
         const dropdownPauseCat = buildDropdown({
           placeholder: "Categoría pausa (todas)",
           options: pauseCatOpts,
@@ -2071,7 +2063,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           },
         });
         container.appendChild(dropdownActive);
-        container.appendChild(dropdownPause);
         container.appendChild(dropdownPauseCat);
       }
 
