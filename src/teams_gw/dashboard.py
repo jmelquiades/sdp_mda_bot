@@ -2048,7 +2048,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         <div class="kpi">
           <h4>Riesgo alto</h4>
           <div class="value" id="kpi-high">-</div>
-          <div class="hint">Tickets en rojo y naranja</div>
+          <div class="hint">Tickets en rojo</div>
         </div>
         <div class="kpi">
           <h4>Seguimiento</h4>
@@ -2567,7 +2567,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         const tickets = filterTickets(flattenTickets(groups));
         const grouped = aggregateGroups(tickets);
         const totals = bandsFromTickets(tickets);
-        const high = (totals.rojo || 0) + (totals.naranja || 0);
+        const high = (totals.rojo || 0);
 
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
         document.getElementById("kpi-high").textContent = high;
