@@ -1971,6 +1971,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days, item.pause_category);
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
+            <td>${item.subject || "-"}</td>
             <td>${item.group || "-"}</td>
             <td>${buildRiskCell(item.ratio, band, item.threshold_days, item.active_days)}</td>
             <td>${pauseCell}</td>
