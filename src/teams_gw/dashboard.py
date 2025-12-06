@@ -1373,16 +1373,12 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       </div>
     </div>
     <script>
-      const fmtDate = (val) => {
+      const fmtDate = (val, opts = { dateStyle: "short", timeStyle: "short" }) => {
         if (!val) return "-";
         const iso = val.includes("Z") || /[+-]\\d{2}:?\\d{2}$/.test(val) ? val : val + "Z";
         const d = new Date(iso);
         if (Number.isNaN(d.getTime())) return val;
-        return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
-      };
-      const buildBar = (value, max, label) => {
-        const pct = max ? Math.min(100, (value / max) * 100) : 0;
-        return `<div class="muted">${label}</div><div class="bar"><div class="bar-fill" style="width:${pct}%;"></div></div>`;
+        return d.toLocaleString("es-PE", { ...opts, timeZone: "America/Lima" });
       };
       const buildSelect = (id, opts, onChange) => {
         const sel = document.createElement("select");
@@ -1416,44 +1412,45 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
             if (filterState.group) return (r.by_group && r.by_group[filterState.group]) || 0;
             return r.total || 0;
           });
-          if (!series.length) { document.getElementById("tact-trend").innerHTML = "Sin datos"; return; }
-          const maxRaw = Math.max(...values, 0);
-          const niceMax = maxRaw <= 5 ? Math.max(5, Math.ceil(maxRaw)) : Math.ceil(maxRaw / 5) * 5;
-          const maxY = niceMax || 1;
-          const pad = 8;
-          const scaleX = (i) => (values.length === 1 ? 50 : (i/(values.length-1))*100);
-          const scaleY = (val) => 100 - ((val/maxY)*80 + pad);
-          const points = values.map((val,i)=>`${scaleX(i)},${scaleY(val)}`).join(" ");
-          const areaPoints = [`0,100`, ...values.map((val,i)=>`${scaleX(i)},${scaleY(val)}`), `100,100`].join(" ");
           const labels = series.map(r => r.run_started_at);
-          const firstLabel = labels[0] ? fmtDate(labels[0]) : "";
-          const lastLabel = labels[labels.length-1] ? fmtDate(labels[labels.length-1]) : "";
-          const midTick = Math.round(maxY / 2);
-          const fmtTick = (n) => Number(n).toLocaleString("es-PE");
-          const circles = values.map((val,i) => {
-            const cx = scaleX(i);
-            const cy = scaleY(val);
-            const title = `${fmtDate(labels[i])} · ${fmtTick(val)} reglas`;
-            return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#2563eb"><title>${title}</title></circle>`;
-          }).join("");
-          document.getElementById("tact-trend").innerHTML = `
-            <div class="trend-area">
-              <div class="axis-y">
-                <span>${fmtTick(maxY)}</span>
-                <span>${fmtTick(midTick)}</span>
-                <span>0</span>
-              </div>
-              <div style="flex:1;">
-                <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  <polygon points="${areaPoints}" fill="rgba(59,130,246,0.15)"></polygon>
-                  <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/>
-                  ${circles}
-                </svg>
-                <div class="axis-labels"><span>${firstLabel}</span><span>${lastLabel}</span></div>
-              </div>
-            </div>
-            <div class="muted small" style="margin-top:4px;">Reglas activas/pausa disparadas (últimas corridas)</div>
-          `;
+          if (!series.length) { document.getElementById("tact-trend").innerHTML = "Sin datos"; return; }
+          const ctxId = "tact-chart";
+          document.getElementById("tact-trend").innerHTML = `<canvas id="${ctxId}" height="160"></canvas>`;
+          const ctx = document.getElementById(ctxId).getContext("2d");
+          if (window.tactChart) { window.tactChart.destroy(); }
+          window.tactChart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: labels.map(d => fmtDate(d, { dateStyle: "short" })),
+              datasets: [{
+                label: "Reglas",
+                data: values,
+                fill: true,
+                tension: 0.35,
+                borderColor: "#2563eb",
+                backgroundColor: "rgba(59,130,246,0.12)",
+                pointRadius: 4,
+                pointHoverRadius: 6,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => `${ctx.parsed.y} reglas`,
+                    title: (items) => items.map(i => fmtDate(series[i.dataIndex].run_started_at, { dateStyle:"medium"})),
+                  },
+                },
+              },
+              scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { precision:0 } },
+              },
+            },
+          });
         };
         const filtersBox = document.getElementById("tact-filters");
         filtersBox.innerHTML = "";
