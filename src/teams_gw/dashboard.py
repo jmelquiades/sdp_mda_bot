@@ -2252,8 +2252,14 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           const isActive = (t.threshold_days || 0) > 0;
           if (!isActive) return false;
           if (ui.level) {
-            const lvl = levelForTicket(t).current;
-            return lvl.id === ui.level;
+            const lvlIdx = LEVELS_ACTIVE.findIndex((l) => l.id === ui.level);
+            if (lvlIdx === -1) return true;
+            const lvl = LEVELS_ACTIVE[lvlIdx];
+            const next = LEVELS_ACTIVE[lvlIdx + 1];
+            const low = Number(lvl.threshold) || 0;
+            const high = next ? Number(next.threshold) : Number.POSITIVE_INFINITY;
+            const days = Number(t.active_days || 0);
+            return days >= low && days < high;
           }
           return true;
         });
