@@ -2421,6 +2421,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             const lvl = levelForTicket(t);
             const nextInfo = lvl.next ? `→ ${lvl.next.label} (${lvl.next.threshold}d)` : "Último nivel";
             const progressNext = lvl.next ? Math.min(100, Math.round(((lvl.days || 0) / (lvl.next.threshold || 1)) * 100)) : 100;
+            const daysLabel = Number.isFinite(lvl.days) ? lvl.days.toFixed(1) : (lvl.days || 0);
             return `<div class="ticket">
               <h4>#${t.ticket_id || "-"} · ${t.subject || "Sin asunto"}</h4>
               <p class="muted">${t.group || "Sin grupo"} · ${t.technician_name || t.technician || "Sin técnico"}</p>
@@ -2429,7 +2430,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
                 <span class="tag" style="margin-left:6px;">${t.threshold_days || "-"}d</span>
                 <span style="margin-left:8px;">${link}</span>
               </p>
-              <p class="muted" style="margin-top:6px;">Nivel: ${lvl.current.label} (${lvl.days?.toFixed?.(1) ?? lvl.days || 0}d) ${nextInfo}</p>
+              <p class="muted" style="margin-top:6px;">Nivel: ${lvl.current.label} (${daysLabel}d) ${nextInfo}</p>
               <div class="level-meter"><span style="width:${progressNext}%;"></span></div>
             </div>`;
           })
