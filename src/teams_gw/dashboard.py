@@ -2131,7 +2131,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="row view" id="view-resumen-row">
+      <div class="row view" id="view-personas-row" style="display:none;">
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
@@ -2144,11 +2144,11 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           <canvas id="techChart" aria-label="Técnicos expuestos"></canvas>
         </div>
         <div class="card">
-          <p class="eyebrow">Detalle</p>
-          <h3>Grupos priorizados</h3>
-          <table id="groupTable">
-            <thead>
-              <tr>
+            <p class="eyebrow">Detalle</p>
+            <h3>Grupos priorizados</h3>
+            <table id="groupTable">
+              <thead>
+                <tr>
                 <th>Grupo</th>
                 <th>Alto</th>
                 <th>Total</th>
@@ -2172,26 +2172,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         <div class="list" id="ticketList" style="margin-top:10px;"></div>
       </div>
       </div> <!-- views -->
-
-      <div class="view" id="view-personas" style="display:none;">
-        <div class="row">
-          <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-              <div>
-                <p class="eyebrow">Técnicos</p>
-                <h3>Top técnicos (personas)</h3>
-                <p class="muted">Conteo de tickets en rojo/naranja.</p>
-              </div>
-            </div>
-            <canvas id="techChart2" aria-label="Técnicos expuestos personas"></canvas>
-          </div>
-          <div class="card">
-            <p class="eyebrow">Grupos</p>
-            <h3>Riesgo por grupo</h3>
-            <div id="groupTable2"></div>
-          </div>
-        </div>
-      </div>
 
       <div class="view" id="view-servicios" style="display:none;">
         <div class="card">
@@ -2259,10 +2239,10 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           if (ui.level) {
             const lvlIdx = LEVELS_ACTIVE.findIndex((l) => l.id === ui.level);
             if (lvlIdx === -1) return true;
-            const lvl = LEVELS_ACTIVE[lvlIdx];
-            const next = LEVELS_ACTIVE[lvlIdx + 1];
-            const low = Number(lvl.threshold) || 0;
-            const high = next ? Number(next.threshold) : Number.POSITIVE_INFINITY;
+            const current = LEVELS_ACTIVE[lvlIdx];
+            const prev = LEVELS_ACTIVE[lvlIdx - 1];
+            const low = prev ? Number(prev.threshold) : 0;
+            const high = Number(current.threshold) || Number.POSITIVE_INFINITY;
             const days = Number(t.active_days || 0);
             return days >= low && days < high;
           }
@@ -2583,11 +2563,9 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
         document.getElementById("kpi-high").textContent = high;
         const orange = totals.naranja || 0;
-        const yellow = totals.amarillo || 0;
-        const green = totals.verde || 0;
         document.getElementById("kpi-orange").textContent = orange;
-        document.getElementById("kpi-mid").textContent = totals.amarillo;
-        document.getElementById("kpi-low").textContent = totals.verde;
+        document.getElementById("kpi-mid").textContent = totals.amarillo || 0;
+        document.getElementById("kpi-low").textContent = totals.verde || 0;
         document.getElementById("kpi-groups").textContent = groups.length;
 
         renderBandsChart(totals);
