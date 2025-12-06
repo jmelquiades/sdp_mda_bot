@@ -1417,7 +1417,9 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
             return r.total || 0;
           });
           if (!series.length) { document.getElementById("tact-trend").innerHTML = "Sin datos"; return; }
-          const maxY = Math.max(...values, 1);
+          const maxRaw = Math.max(...values, 0);
+          const niceMax = maxRaw <= 5 ? Math.max(5, Math.ceil(maxRaw)) : Math.ceil(maxRaw / 5) * 5;
+          const maxY = niceMax || 1;
           const pad = 8;
           const scaleX = (i) => (values.length === 1 ? 50 : (i/(values.length-1))*100);
           const scaleY = (val) => 100 - ((val/maxY)*80 + pad);
@@ -1426,17 +1428,26 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
           const labels = series.map(r => r.run_started_at);
           const firstLabel = labels[0] ? fmtDate(labels[0]) : "";
           const lastLabel = labels[labels.length-1] ? fmtDate(labels[labels.length-1]) : "";
+          const midTick = Math.round(maxY / 2);
+          const fmtTick = (n) => Number(n).toLocaleString("es-PE");
+          const circles = values.map((val,i) => {
+            const cx = scaleX(i);
+            const cy = scaleY(val);
+            const title = `${fmtDate(labels[i])} · ${fmtTick(val)} reglas`;
+            return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#2563eb"><title>${title}</title></circle>`;
+          }).join("");
           document.getElementById("tact-trend").innerHTML = `
             <div class="trend-area">
               <div class="axis-y">
-                <span>${maxY}</span>
-                <span>${Math.round(maxY/2)}</span>
+                <span>${fmtTick(maxY)}</span>
+                <span>${fmtTick(midTick)}</span>
                 <span>0</span>
               </div>
               <div style="flex:1;">
                 <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <polygon points="${areaPoints}" fill="rgba(59,130,246,0.15)"></polygon>
                   <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/>
+                  ${circles}
                 </svg>
                 <div class="axis-labels"><span>${firstLabel}</span><span>${lastLabel}</span></div>
               </div>
