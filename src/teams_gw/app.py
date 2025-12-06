@@ -349,6 +349,15 @@ async def service_dashboard_page():
 async def risk_dashboard_page():
     return render_risk_dashboard_html()
 
+@app.get("/dashboard/tactico", response_class=HTMLResponse)
+async def tactical_dashboard_page():
+    return render_tactical_dashboard_html()
+
+
+@app.get("/dashboard/ejecutivo", response_class=HTMLResponse)
+async def executive_dashboard_page():
+    return render_executive_dashboard_html()
+
 
 @app.get("/dashboard/data")
 async def dashboard_data():

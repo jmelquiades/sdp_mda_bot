@@ -188,6 +188,14 @@ def render_risk_dashboard_html() -> HTMLResponse:
     return HTMLResponse(RISK_TEMPLATE)
 
 
+def render_tactical_dashboard_html() -> HTMLResponse:
+    return HTMLResponse(TACTICO_TEMPLATE)
+
+
+def render_executive_dashboard_html() -> HTMLResponse:
+    return HTMLResponse(EJECUTIVO_TEMPLATE)
+
+
 ROWS_FOOTER = ""
 
 DASHBOARD_TEMPLATE = """<!DOCTYPE html>
@@ -425,31 +433,6 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         color: #475569;
         font-size: 13px;
       }
-      .section-block {
-        margin-top: 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 12px;
-      }
-      .section-block .card {
-        background: #fff;
-        border-radius: 14px;
-        padding: 14px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-      }
-      .mini-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-      .mini-table th,
-      .mini-table td {
-        padding: 6px 8px;
-        border-bottom: 1px solid #f1f5f9;
-        text-align: left;
-      }
-      .mini-table th { color: #475569; }
       .chip-list {
         display: flex;
         flex-wrap: wrap;
@@ -1334,6 +1317,144 @@ function prettifyLevel(level) {
 </html>
 """
 
+TACTICO_TEMPLATE = """<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vista Táctica</title>
+    <style>
+      body { margin:0; font-family: "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0f172a; color:#0b172a; }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; background: linear-gradient(135deg, #f8fafc, #e0f2fe); min-height: 100vh; }
+      .hero { display:flex; justify-content: space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+      .hero h1 { margin:0; font-size:28px; color:#0f172a; }
+      .hero .muted { color:#475569; margin:4px 0 0; }
+      .card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:12px; margin-top:14px; }
+      .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:12px; box-shadow:0 12px 28px rgba(15,23,42,0.08); }
+      .card h3 { margin:0 0 8px; font-size:16px; color:#0f172a; }
+      .muted { color:#475569; font-size:13px; margin:0 0 8px; }
+      .chip { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #e2e8f0; background:#f8fafc; font-size:12px; margin:2px; }
+      .mini-table { width:100%; border-collapse:collapse; font-size:13px; }
+      .mini-table th, .mini-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
+      .mini-table th { color:#475569; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <p class="muted" style="text-transform:uppercase; letter-spacing:1px;">Controller SDP</p>
+          <h1>Vista Táctica</h1>
+          <p class="muted">Backlog, bandas y desempeño operativo.</p>
+        </div>
+        <div class="card" style="min-width:220px; max-width:280px;">
+          <p class="muted">Última actualización</p>
+          <div id="last-updated" style="font-weight:700; font-size:18px;">-</div>
+        </div>
+      </div>
+      <div class="card-grid" id="tact-grid">
+        <div class="card"><h3>Backlog (últimas corridas)</h3><div id="tact-trend" class="muted">Cargando…</div></div>
+        <div class="card"><h3>Bandas actuales</h3><div id="tact-bands"></div></div>
+        <div class="card"><h3>Pausa por categoría</h3><div id="tact-pause"></div></div>
+        <div class="card"><h3>Top grupos (activo promedio)</h3><div id="tact-groups"></div></div>
+      </div>
+    </div>
+    <script>
+      const fmtDate = (val) => {
+        if (!val) return "-";
+        const iso = val.includes("Z") || /[+-]\\d{2}:?\\d{2}$/.test(val) ? val : val + "Z";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return val;
+        return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
+      };
+      fetch("/controller/tactical").then(r => r.json()).then(data => {
+        document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
+        const trend = (data.backlog_trend||[]).slice(0,12).map(t=>`${fmtDate(t.timestamp)} · ${t.count}`).join("<br>") || "Sin datos";
+        document.getElementById("tact-trend").innerHTML = trend;
+        const bands = data.bands || {};
+        document.getElementById("tact-bands").innerHTML = ["rojo","naranja","amarillo","verde"].map(b=>`<span class="chip">${b}: ${bands[b]||0}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        const pause = data.pause_mix || {};
+        document.getElementById("tact-pause").innerHTML = Object.entries(pause).map(([k,v])=>`<span class="chip">${k||"N/A"}: ${v}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        const groups = data.top_groups || [];
+        document.getElementById("tact-groups").innerHTML = groups.length
+          ? `<table class="mini-table"><thead><tr><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Tickets</th></tr></thead><tbody>${groups.map(g=>`<tr><td>${g.group}</td><td>${g.avg_active_days}</td><td>${g.avg_pause_days}</td><td>${g.count}</td></tr>`).join("")}</tbody></table>`
+          : "<span class='muted'>Sin datos</span>";
+      }).catch(()=> {
+        document.getElementById("tact-grid").innerHTML = "<p class='muted'>No se pudo cargar.</p>";
+      });
+    </script>
+  </body>
+</html>
+"""
+
+EJECUTIVO_TEMPLATE = """<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vista Ejecutiva</title>
+    <style>
+      body { margin:0; font-family: "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0f172a; color:#0b172a; }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; background: linear-gradient(135deg, #f8fafc, #eef2ff); min-height: 100vh; }
+      .hero { display:flex; justify-content: space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+      .hero h1 { margin:0; font-size:28px; color:#0f172a; }
+      .hero .muted { color:#475569; margin:4px 0 0; }
+      .card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:12px; margin-top:14px; }
+      .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:12px; box-shadow:0 12px 28px rgba(15,23,42,0.08); }
+      .card h3 { margin:0 0 8px; font-size:16px; color:#0f172a; }
+      .muted { color:#475569; font-size:13px; margin:0 0 8px; }
+      .chip { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #e2e8f0; background:#f8fafc; font-size:12px; margin:2px; }
+      .mini-table { width:100%; border-collapse:collapse; font-size:13px; }
+      .mini-table th, .mini-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
+      .mini-table th { color:#475569; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <p class="muted" style="text-transform:uppercase; letter-spacing:1px;">Controller SDP</p>
+          <h1>Vista Ejecutiva</h1>
+          <p class="muted">Solicitantes, prioridades y pausas.</p>
+        </div>
+        <div class="card" style="min-width:220px; max-width:280px;">
+          <p class="muted">Última actualización</p>
+          <div id="last-updated" style="font-weight:700; font-size:18px;">-</div>
+        </div>
+      </div>
+      <div class="card-grid" id="exec-grid">
+        <div class="card"><h3>Prioridad (foto actual)</h3><div id="exec-prio"></div></div>
+        <div class="card"><h3>Top solicitantes</h3><div id="exec-req"></div></div>
+        <div class="card"><h3>Pausa por categoría</h3><div id="exec-pause"></div></div>
+        <div class="card"><h3>Backlog por sitio</h3><div id="exec-site"></div></div>
+      </div>
+    </div>
+    <script>
+      const fmtName = (val) => {
+        if (!val) return "-";
+        const base = (val.includes("@") ? val.split("@")[0] : val).replace(/[._]/g, " ");
+        return base.split(" ").map(w => w ? w[0].toUpperCase()+w.slice(1) : "").join(" ").trim();
+      };
+      fetch("/controller/executive").then(r => r.json()).then(data => {
+        document.getElementById("last-updated").textContent = new Date().toLocaleString("es-PE", { dateStyle:"short", timeStyle:"short", timeZone:"America/Lima" });
+        const prio = data.priority_distribution || [];
+        document.getElementById("exec-prio").innerHTML = prio.map(p=>`<span class="chip">${p.label}: ${p.count}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        const reqs = data.top_requesters || [];
+        document.getElementById("exec-req").innerHTML = reqs.length
+          ? `<table class="mini-table"><thead><tr><th>Solicitante</th><th>Tickets</th><th>Activo (avg)</th><th>Pausa (avg)</th></tr></thead><tbody>${reqs.map(r=>`<tr><td>${fmtName(r.requester)}</td><td>${r.count}</td><td>${r.avg_active_days}</td><td>${r.avg_pause_days}</td></tr>`).join("")}</tbody></table>`
+          : "<span class='muted'>Sin datos</span>";
+        const pause = data.pause_mix || [];
+        document.getElementById("exec-pause").innerHTML = pause.map(p=>`<span class="chip">${p.category||"N/A"}: ${p.tickets} (${p.pause_days}d)</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        const sites = data.backlog_by_site || [];
+        document.getElementById("exec-site").innerHTML = sites.map(s=>`<span class="chip">${s.site}: ${s.count}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+      }).catch(()=> {
+        document.getElementById("exec-grid").innerHTML = "<p class='muted'>No se pudo cargar.</p>";
+      });
+    </script>
+  </body>
+</html>
+"""
+
 
 SERVICE_TEMPLATE = """<!DOCTYPE html>
 <html lang="es">
@@ -1863,16 +1984,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           </table>
         </div>
       </div>
-      <div class="section-block" id="tactical-section">
-        <div class="card">
-          <h3>Vista táctica</h3>
-          <div id="tactical-content"><p class="muted small">Cargando…</p></div>
-        </div>
-        <div class="card">
-          <h3>Vista ejecutiva</h3>
-          <div id="executive-content"><p class="muted small">Cargando…</p></div>
-        </div>
-      </div>
     </div>
     <script>
       const fmtDate = (val) => {
@@ -1970,12 +2081,10 @@ RISK_TEMPLATE = """<!DOCTYPE html>
 
       async function loadAll(filters = {}) {
         uiState.filters = { ...uiState.filters, ...filters };
-        const [risk, ops, summary, tactical, executive] = await Promise.all([
+        const [risk, ops, summary] = await Promise.all([
           fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []})),
           fetch(baseUrl + "/dashboard/data/risk/summary").then(r => r.json()).catch(() => ({})),
-          fetch(baseUrl + "/controller/tactical").then(r => r.json()).catch(() => ({})),
-          fetch(baseUrl + "/controller/executive").then(r => r.json()).catch(() => ({})),
         ]);
         opsData = ops;
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
@@ -2000,8 +2109,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         });
         renderSummary({ items: timeFiltered }, ops);
         renderFilters(summary, filters, items);
-        renderTactical(tactical);
-        renderExecutive(executive);
 
         const riskBody = document.querySelector("#risk-table tbody");
         const rows = timeFiltered.map(item => {
@@ -2242,63 +2349,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         });
       }
 
-      function renderTactical(data = {}) {
-        const container = document.getElementById("tactical-content");
-        if (!container) return;
-        const trend = (data.backlog_trend || []).slice(0, 10).reverse();
-        const bands = data.bands || {};
-        const pauseMix = data.pause_mix || {};
-        const topGroups = data.top_groups || [];
-        container.innerHTML = `
-          <div class="small muted">Backlog (últimas corridas)</div>
-          <div class="muted small">${trend.map(t => `${fmtDate(t.timestamp)} · ${t.count}`).join("<br>") || "Sin datos"}</div>
-          <div class="small muted" style="margin-top:8px;">Bandas actuales</div>
-          <div class="chip-list">
-            ${["rojo","naranja","amarillo","verde"].map(b=>`<span class="chip">${b}: ${bands[b]||0}</span>`).join("")}
-          </div>
-          <div class="small muted">Pausa por categoría</div>
-          <div class="chip-list">
-            ${Object.entries(pauseMix).map(([k,v])=>`<span class="chip">${k||"N/A"}: ${v}</span>`).join("") || "<span class='chip'>Sin datos</span>"}
-          </div>
-          <div class="small muted">Top grupos (activo promedio)</div>
-          <table class="mini-table">
-            <thead><tr><th>Grupo</th><th>Activo (d)</th><th>Pausa (d)</th><th>Tickets</th></tr></thead>
-            <tbody>
-              ${topGroups.map(g=>`<tr><td>${g.group}</td><td>${g.avg_active_days}</td><td>${g.avg_pause_days}</td><td>${g.count}</td></tr>`).join("") || "<tr><td colspan='4' class='muted'>Sin datos</td></tr>"}
-            </tbody>
-          </table>
-        `;
-      }
-
-      function renderExecutive(data = {}) {
-        const container = document.getElementById("executive-content");
-        if (!container) return;
-        const priority = data.priority_distribution || [];
-        const requesters = data.top_requesters || [];
-        const pauseMix = data.pause_mix || [];
-        const sites = data.backlog_by_site || [];
-        container.innerHTML = `
-          <div class="small muted">Prioridad (foto actual)</div>
-          <div class="chip-list">
-            ${priority.map(p=>`<span class="chip">${p.label}: ${p.count}</span>`).join("") || "<span class='chip'>Sin datos</span>"}
-          </div>
-          <div class="small muted">Top solicitantes</div>
-          <table class="mini-table">
-            <thead><tr><th>Solicitante</th><th>Tickets</th><th>Activo (avg)</th><th>Pausa (avg)</th></tr></thead>
-            <tbody>
-              ${requesters.map(r=>`<tr><td>${fmtName(r.requester)}</td><td>${r.count}</td><td>${r.avg_active_days}</td><td>${r.avg_pause_days}</td></tr>`).join("") || "<tr><td colspan='4' class='muted'>Sin datos</td></tr>"}
-            </tbody>
-          </table>
-          <div class="small muted">Pausa por categoría</div>
-          <div class="chip-list">
-            ${pauseMix.map(p=>`<span class="chip">${p.category||"N/A"}: ${p.tickets} (${p.pause_days}d)</span>`).join("") || "<span class='chip'>Sin datos</span>"}
-          </div>
-          <div class="small muted">Backlog por sitio</div>
-          <div class="chip-list">
-            ${sites.map(s=>`<span class="chip">${s.site}: ${s.count}</span>`).join("") || "<span class='chip'>Sin datos</span>"}
-          </div>
-        `;
-      }
 
       const tabs = document.getElementById("view-tabs");
       if (tabs) {
