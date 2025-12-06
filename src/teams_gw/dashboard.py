@@ -1990,6 +1990,31 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         display: grid;
         gap: 10px;
       }
+      .views {
+        margin-top: 10px;
+      }
+      .view-tabs {
+        display: inline-flex;
+        gap: 6px;
+        margin: 10px 0 8px;
+        background: rgba(15, 23, 42, 0.65);
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+      }
+      .view-tabs button {
+        border: none;
+        background: transparent;
+        color: #cbd5e1;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .view-tabs button.active {
+        background: linear-gradient(120deg, rgba(59, 130, 246, 0.35), rgba(56, 189, 248, 0.35));
+        color: #e2e8f0;
+      }
       .ticket {
         padding: 10px;
         border-radius: 12px;
@@ -2057,7 +2082,15 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         <div class="chips" id="levelChips" style="display:none;"></div>
       </div>
 
-      <div class="grid">
+      <div class="view-tabs" id="viewTabs">
+        <button class="active" data-view="resumen">Resumen</button>
+        <button data-view="personas">Personas</button>
+        <button data-view="servicios">Servicios</button>
+        <button data-view="pausa">Pausa</button>
+      </div>
+
+      <div class="views">
+      <div class="grid view" id="view-resumen">
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
@@ -2093,7 +2126,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="row">
+      <div class="row view" id="view-resumen-row">
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
@@ -2132,6 +2165,53 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           <span class="tag">Ordenado</span>
         </div>
         <div class="list" id="ticketList" style="margin-top:10px;"></div>
+      </div>
+      </div> <!-- views -->
+
+      <div class="view" id="view-personas" style="display:none;">
+        <div class="row">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+              <div>
+                <p class="eyebrow">Técnicos</p>
+                <h3>Top técnicos (personas)</h3>
+                <p class="muted">Conteo de tickets en rojo/naranja.</p>
+              </div>
+            </div>
+            <canvas id="techChart2" aria-label="Técnicos expuestos personas"></canvas>
+          </div>
+          <div class="card">
+            <p class="eyebrow">Grupos</p>
+            <h3>Riesgo por grupo</h3>
+            <div id="groupTable2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="view" id="view-servicios" style="display:none;">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <p class="eyebrow">Servicios</p>
+              <h3>Distribución por categoría</h3>
+              <p class="muted">Conteo de tickets por categoría y subcategoría.</p>
+            </div>
+          </div>
+          <div id="serviceSummary"></div>
+        </div>
+      </div>
+
+      <div class="view" id="view-pausa" style="display:none;">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <p class="eyebrow">Pausa</p>
+              <h3>Tickets en pausa por categoría</h3>
+              <p class="muted">Filtra con el chip de pausa; muestra conteo y detalle.</p>
+            </div>
+          </div>
+          <div id="pauseSummary"></div>
+        </div>
       </div>
     </div>
     <script>
@@ -2220,6 +2300,44 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           counts[lvl.id] = (counts[lvl.id] || 0) + 1;
         });
         return LEVELS_ACTIVE.map((lvl) => counts[lvl.id] || 0);
+      };
+
+      const renderServiceSummary = (tickets) => {
+        const container = document.getElementById("serviceSummary");
+        if (!container) return;
+        if (!tickets.length) { container.innerHTML = "<p class='muted'>Sin tickets.</p>"; return; }
+        const counts = {};
+        tickets.forEach((t) => {
+          const cat = t.category || "Sin categoría";
+          const sub = t.subcategory || "Sin subcategoría";
+          counts[cat] = counts[cat] || { total: 0, subs: {} };
+          counts[cat].total += 1;
+          counts[cat].subs[sub] = (counts[cat].subs[sub] || 0) + 1;
+        });
+        const rows = Object.entries(counts).map(([cat, info]) => {
+          const subs = Object.entries(info.subs).sort((a,b)=>b[1]-a[1]).map(([sub,c])=>`${sub} (${c})`).join(", ");
+          return `<tr><td>${cat}</td><td>${info.total}</td><td>${subs}</td></tr>`;
+        }).join("");
+        container.innerHTML = `<table><thead><tr><th>Categoría</th><th>Total</th><th>Subcategorías</th></tr></thead><tbody>${rows}</tbody></table>`;
+      };
+
+      const renderPauseSummary = (tickets) => {
+        const container = document.getElementById("pauseSummary");
+        if (!container) return;
+        const paused = tickets.filter(t => (t.pause_threshold_days || 0) > 0);
+        if (!paused.length) { container.innerHTML = "<p class='muted'>Sin tickets en pausa.</p>"; return; }
+        const rows = paused.map(t => {
+          const pct = Math.round((t.pause_ratio || 0) * 100);
+          const link = t.ticket_link ? `<a href="${t.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-";
+          return `<tr>
+            <td>#${t.ticket_id}</td>
+            <td>${t.pause_category || "-"}</td>
+            <td>${pct}%</td>
+            <td>${t.pause_threshold_days || "-"}</td>
+            <td>${link}</td>
+          </tr>`;
+        }).join("");
+        container.innerHTML = `<table><thead><tr><th>Ticket</th><th>Categoría</th><th>Avance</th><th>Umbral</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
       };
 
       const bandsFromTickets = (tickets = []) => {
@@ -2467,12 +2585,56 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderTechChart(topTechnicians(tickets, 8));
         renderLevelChart(levelCounts(tickets));
         renderTickets(topTickets(tickets, 10));
+        // Personas view reuse
+        const techCanvas2 = document.getElementById("techChart2");
+        if (techCanvas2) {
+          destroyChart("tech2");
+          charts.tech2 = new Chart(techCanvas2.getContext("2d"), {
+            type: "bar",
+            data: {
+              labels: topTechnicians(tickets, 12).map(t => t.name),
+              datasets: [{
+                label: "Tickets en riesgo alto",
+                data: topTechnicians(tickets, 12).map(t => t.count),
+                backgroundColor: "rgba(56, 189, 248, 0.55)",
+                borderColor: "#38bdf8",
+                borderWidth: 1.5,
+                borderRadius: 8,
+              }],
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+                y: { ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(148,163,184,0.2)" } },
+              },
+            },
+          });
+        }
+        const groupTable2 = document.getElementById("groupTable2");
+        if (groupTable2) {
+          const rows = grouped.map((g) => {
+            const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
+            const total =
+              (g.bands?.rojo || 0) +
+              (g.bands?.naranja || 0) +
+              (g.bands?.amarillo || 0) +
+              (g.bands?.verde || 0);
+            return `<tr><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
+          }).join("") || "<tr><td colspan='3' class='muted'>Sin grupos.</td></tr>";
+          groupTable2.innerHTML = `<table><thead><tr><th>Grupo</th><th>Alto</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+        renderServiceSummary(tickets);
+        renderPauseSummary(tickets);
       }
 
       const wireFilters = () => {
         const modeButtons = document.querySelectorAll("#modeFilters button[data-mode]");
         const pauseChips = document.querySelectorAll("#pauseChips .chip-btn");
         const levelChips = document.getElementById("levelChips");
+        const viewTabs = document.querySelectorAll("#viewTabs button[data-view]");
+        const views = document.querySelectorAll(".view");
         if (levelChips && !levelChips.hasChildNodes()) {
           const allBtn = document.createElement("button");
           allBtn.className = "chip-btn active";
@@ -2521,6 +2683,16 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           });
           levelChips.style.display = ui.mode === "activo" ? "inline-flex" : "none";
         }
+        viewTabs.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            viewTabs.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            const view = btn.getAttribute("data-view");
+            views.forEach((v) => {
+              v.style.display = v.id === `view-${view}` || v.id === `view-${view}-row` ? "" : "none";
+            });
+          });
+        });
       };
 
       document.addEventListener("DOMContentLoaded", () => {
