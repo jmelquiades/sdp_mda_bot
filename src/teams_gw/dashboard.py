@@ -1338,21 +1338,10 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       .mini-table th, .mini-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
       .mini-table th { color:#475569; }
       .bar { height:8px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin:6px 0; }
-      .bar-fill { height:100%; background: linear-gradient(90deg,#6366f1,#22c55e); }
-      .bar {
-        height: 8px;
-        border-radius: 999px;
-        background: #e2e8f0;
-        overflow: hidden;
-        margin: 6px 0;
-      }
-      .bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #3b82f6, #22c55e);
-      }
+      .bar-fill { height:100%; background: linear-gradient(90deg,#3b82f6,#22c55e); }
       .spark {
         width: 100%;
-        height: 60px;
+        height: 70px;
       }
     </style>
   </head>
@@ -1429,13 +1418,18 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
           });
           if (!series.length) { document.getElementById("tact-trend").innerHTML = "Sin datos"; return; }
           const maxY = Math.max(...values, 1);
-          const points = values.map((val,i)=>`${(i/(values.length-1))*100},${100 - (val/maxY)*100}`).join(" ");
+          const pad = 8;
+          const scaleX = (i) => (values.length === 1 ? 50 : (i/(values.length-1))*100);
+          const scaleY = (val) => 100 - ((val/maxY)*80 + pad);
+          const points = values.map((val,i)=>`${scaleX(i)},${scaleY(val)}`).join(" ");
+          const areaPoints = [`0,100`, ...values.map((val,i)=>`${scaleX(i)},${scaleY(val)}`), `100,100`].join(" ");
           const labels = series.map(r => r.run_started_at);
           document.getElementById("tact-trend").innerHTML = `
             <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <polygon points="${areaPoints}" fill="rgba(59,130,246,0.15)"></polygon>
               <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/>
             </svg>
-            <div class="muted small">Reglas activas/pausa disparadas (últimas corridas)</div>
+            <div class="muted small" style="margin-top:4px;">Reglas activas/pausa disparadas (últimas corridas)</div>
           `;
         };
         const filtersBox = document.getElementById("tact-filters");
