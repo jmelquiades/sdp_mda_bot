@@ -2051,6 +2051,11 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           <div class="hint">Tickets en rojo</div>
         </div>
         <div class="kpi">
+          <h4>En riesgo</h4>
+          <div class="value" id="kpi-orange">-</div>
+          <div class="hint">Tickets en naranja</div>
+        </div>
+        <div class="kpi">
           <h4>Seguimiento</h4>
           <div class="value" id="kpi-mid">-</div>
           <div class="hint">Tickets en amarillo</div>
@@ -2577,6 +2582,10 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
 
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
         document.getElementById("kpi-high").textContent = high;
+        const orange = totals.naranja || 0;
+        const yellow = totals.amarillo || 0;
+        const green = totals.verde || 0;
+        document.getElementById("kpi-orange").textContent = orange;
         document.getElementById("kpi-mid").textContent = totals.amarillo;
         document.getElementById("kpi-low").textContent = totals.verde;
         document.getElementById("kpi-groups").textContent = groups.length;
