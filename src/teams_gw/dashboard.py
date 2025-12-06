@@ -1344,6 +1344,7 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       .axis-y { display:flex; flex-direction:column; justify-content:space-between; font-size:11px; color:#475569; margin-right:6px; }
       .trend-area { display:flex; align-items:stretch; gap:6px; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <div class="wrap">
