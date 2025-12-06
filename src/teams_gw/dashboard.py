@@ -1928,6 +1928,18 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         gap: 14px;
         margin-top: 14px;
       }
+      .level-meter {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.3);
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .level-meter span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #38bdf8, #2563eb);
+      }
       .filter-bar {
         display: flex;
         flex-wrap: wrap;
@@ -2056,6 +2068,17 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           </div>
           <canvas id="bandChart" aria-label="Distribución por riesgo"></canvas>
         </div>
+        <div class="card" id="levelCard">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <p class="eyebrow">Escalamiento</p>
+              <h3>Niveles alcanzados</h3>
+              <p class="muted">Conteo por nivel (activo).</p>
+            </div>
+            <span class="tag">Escala</span>
+          </div>
+          <canvas id="levelChart" aria-label="Niveles de alerta"></canvas>
+        </div>
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
@@ -2114,6 +2137,14 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       const baseUrl = window.location.origin;
       const charts = {};
       const colors = { rojo: "#ef4444", naranja: "#f97316", amarillo: "#facc15", verde: "#22c55e" };
+      const LEVELS_ACTIVE = [
+        { id: "recordatorio_tecnico", label: "Recordatorio", threshold: 3 },
+        { id: "Escalamiento_Supervisor", label: "Supervisor de Mesa", threshold: 7 },
+        { id: "alerta_jefe_mesa", label: "Jefe de Mesa", threshold: 15 },
+        { id: "alerta_jefe_operacion", label: "Jefe de Operaciones", threshold: 25 },
+        { id: "alerta_jefe_servicios", label: "Jefe de Servicios", threshold: 30 },
+        { id: "alerta_gerencia", label: "Gerente de Servicios", threshold: 60 },
+      ];
       const fmtDate = (val) => {
         if (!val) return "-";
         const iso = val.includes("Z") || /[+-]\\d{2}:?\\d{2}$/.test(val) ? val : val + "Z";
@@ -2154,6 +2185,32 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           return ticket.pause_ratio || 0;
         }
         return ticket.ratio || 0;
+      };
+
+      const levelForTicket = (ticket) => {
+        const days = ticket.active_days || 0;
+        let current = LEVELS_ACTIVE[0];
+        let next = null;
+        for (let i = 0; i < LEVELS_ACTIVE.length; i++) {
+          const lvl = LEVELS_ACTIVE[i];
+          if (days >= lvl.threshold) {
+            current = lvl;
+            next = LEVELS_ACTIVE[i + 1] || null;
+            continue;
+          }
+          next = lvl;
+          break;
+        }
+        return { current, next, days };
+      };
+
+      const levelCounts = (tickets = []) => {
+        const counts = LEVELS_ACTIVE.reduce((acc, lvl) => ({ ...acc, [lvl.id]: 0 }), {});
+        tickets.forEach((t) => {
+          const lvl = levelForTicket(t).current;
+          counts[lvl.id] = (counts[lvl.id] || 0) + 1;
+        });
+        return LEVELS_ACTIVE.map((lvl) => counts[lvl.id] || 0);
       };
 
       const bandsFromTickets = (tickets = []) => {
@@ -2230,6 +2287,39 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             plugins: {
               legend: { position: "bottom", labels: { color: "#e2e8f0" } },
               tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}` } },
+            },
+          },
+        });
+      };
+
+      const renderLevelChart = (counts) => {
+        destroyChart("levels");
+        const card = document.getElementById("levelCard");
+        if (!card) return;
+        card.style.display = ui.mode === "activo" ? "block" : "none";
+        if (ui.mode !== "activo") return;
+        const ctx = document.getElementById("levelChart").getContext("2d");
+        charts.levels = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: LEVELS_ACTIVE.map((l) => l.label),
+            datasets: [
+              {
+                label: "Tickets por nivel",
+                data: counts,
+                backgroundColor: "rgba(37, 99, 235, 0.55)",
+                borderColor: "#2563eb",
+                borderWidth: 1.5,
+                borderRadius: 8,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+              y: { ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(148,163,184,0.2)" } },
             },
           },
         });
@@ -2328,6 +2418,9 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             const pct = Math.round((ratioFor(t) || 0) * 100);
             const band = bandKeyFor(t);
             const link = t.ticket_link ? `<a href="${t.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-";
+            const lvl = levelForTicket(t);
+            const nextInfo = lvl.next ? `→ ${lvl.next.label} (${lvl.next.threshold}d)` : "Último nivel";
+            const progressNext = lvl.next ? Math.min(100, Math.round(((lvl.days || 0) / (lvl.next.threshold || 1)) * 100)) : 100;
             return `<div class="ticket">
               <h4>#${t.ticket_id || "-"} · ${t.subject || "Sin asunto"}</h4>
               <p class="muted">${t.group || "Sin grupo"} · ${t.technician_name || t.technician || "Sin técnico"}</p>
@@ -2336,6 +2429,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
                 <span class="tag" style="margin-left:6px;">${t.threshold_days || "-"}d</span>
                 <span style="margin-left:8px;">${link}</span>
               </p>
+              <p class="muted" style="margin-top:6px;">Nivel: ${lvl.current.label} (${lvl.days?.toFixed?.(1) ?? lvl.days || 0}d) ${nextInfo}</p>
+              <div class="level-meter"><span style="width:${progressNext}%;"></span></div>
             </div>`;
           })
           .join("");
@@ -2360,6 +2455,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderGroupStacked(prioritized);
         renderGroupTable(prioritized);
         renderTechChart(topTechnicians(tickets, 8));
+        renderLevelChart(levelCounts(tickets));
         renderTickets(topTickets(tickets, 10));
       }
 
