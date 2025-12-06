@@ -2054,6 +2054,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           <button class="chip-btn" data-pause="PROVEEDOR">Proveedor</button>
           <button class="chip-btn" data-pause="INTERNA">Interna</button>
         </div>
+        <div class="chips" id="levelChips" style="display:none;"></div>
       </div>
 
       <div class="grid">
@@ -2153,7 +2154,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
       };
 
-      const ui = { mode: "activo", pauseCategory: "" };
+      const ui = { mode: "activo", pauseCategory: "", level: "" };
 
       const flattenTickets = (groups = []) =>
         groups.flatMap((g) => (g.tickets || []).map((t) => ({ ...t, group: g.group || "Sin grupo" })));
@@ -2170,7 +2171,15 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         if (ui.mode === "recordatorio") {
           return tickets.filter((t) => (t.threshold_days || 0) > 0 && (t.threshold_days || 0) <= 3);
         }
-        return tickets.filter((t) => (t.threshold_days || 0) > 0);
+        return tickets.filter((t) => {
+          const isActive = (t.threshold_days || 0) > 0;
+          if (!isActive) return false;
+          if (ui.level) {
+            const lvl = levelForTicket(t).current;
+            return lvl.id === ui.level;
+          }
+          return true;
+        });
       };
 
       const bandKeyFor = (ticket) => {
@@ -2463,6 +2472,21 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       const wireFilters = () => {
         const modeButtons = document.querySelectorAll("#modeFilters button[data-mode]");
         const pauseChips = document.querySelectorAll("#pauseChips .chip-btn");
+        const levelChips = document.getElementById("levelChips");
+        if (levelChips && !levelChips.hasChildNodes()) {
+          const allBtn = document.createElement("button");
+          allBtn.className = "chip-btn active";
+          allBtn.textContent = "Todos los niveles";
+          allBtn.setAttribute("data-level", "");
+          levelChips.appendChild(allBtn);
+          LEVELS_ACTIVE.forEach((lvl) => {
+            const btn = document.createElement("button");
+            btn.className = "chip-btn";
+            btn.textContent = `${lvl.label} (${lvl.threshold}d)`;
+            btn.setAttribute("data-level", lvl.id);
+            levelChips.appendChild(btn);
+          });
+        }
         modeButtons.forEach((btn) => {
           btn.addEventListener("click", () => {
             modeButtons.forEach((b) => b.classList.remove("active"));
@@ -2470,6 +2494,11 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             ui.mode = btn.getAttribute("data-mode") || "activo";
             const pauseWrap = document.getElementById("pauseChips");
             if (pauseWrap) pauseWrap.style.display = ui.mode === "pausa" ? "inline-flex" : "none";
+            if (levelChips) levelChips.style.display = ui.mode === "activo" ? "inline-flex" : "none";
+            if (ui.mode !== "activo") {
+              ui.level = "";
+              if (levelChips) levelChips.querySelectorAll(".chip-btn").forEach((c, idx) => c.classList.toggle("active", idx === 0));
+            }
             loadOps().catch((err) => console.error(err));
           });
         });
@@ -2481,6 +2510,17 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             loadOps().catch((err) => console.error(err));
           });
         });
+        if (levelChips) {
+          levelChips.querySelectorAll(".chip-btn").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              levelChips.querySelectorAll(".chip-btn").forEach((c) => c.classList.remove("active"));
+              chip.classList.add("active");
+              ui.level = chip.getAttribute("data-level") || "";
+              loadOps().catch((err) => console.error(err));
+            });
+          });
+          levelChips.style.display = ui.mode === "activo" ? "inline-flex" : "none";
+        }
       };
 
       document.addEventListener("DOMContentLoaded", () => {
