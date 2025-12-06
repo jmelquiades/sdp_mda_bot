@@ -1928,6 +1928,52 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         gap: 14px;
         margin-top: 14px;
       }
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin: 12px 0 6px;
+      }
+      .segmented {
+        display: inline-flex;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.6);
+      }
+      .segmented button {
+        border: none;
+        padding: 10px 14px;
+        background: transparent;
+        color: #cbd5e1;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .segmented button.active {
+        background: linear-gradient(120deg, rgba(59, 130, 246, 0.35), rgba(56, 189, 248, 0.35));
+        color: #e2e8f0;
+      }
+      .chips {
+        display: inline-flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .chip-btn {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.55);
+        color: #cbd5e1;
+        padding: 8px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .chip-btn.active {
+        background: rgba(56, 189, 248, 0.25);
+        color: #e2e8f0;
+        border-color: rgba(56, 189, 248, 0.6);
+      }
       .list {
         display: grid;
         gap: 10px;
@@ -1981,6 +2027,20 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           <h4>Grupos monitoreados</h4>
           <div class="value" id="kpi-groups">-</div>
           <div class="hint">Ordenados por riesgo</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="segmented" id="modeFilters">
+          <button class="active" data-mode="activo">Activo</button>
+          <button data-mode="pausa">Pausa</button>
+          <button data-mode="recordatorio">Recordatorio</button>
+        </div>
+        <div class="chips" id="pauseChips" style="display:none;">
+          <button class="chip-btn active" data-pause="">Todas</button>
+          <button class="chip-btn" data-pause="CLIENTE">Cliente</button>
+          <button class="chip-btn" data-pause="PROVEEDOR">Proveedor</button>
+          <button class="chip-btn" data-pause="INTERNA">Interna</button>
         </div>
       </div>
 
@@ -2062,43 +2122,75 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
       };
 
-      const sumBands = (groups = []) => {
-        return groups.reduce(
-          (acc, g) => {
-            const b = g.bands || {};
-            acc.rojo += b.rojo || 0;
-            acc.naranja += b.naranja || 0;
-            acc.amarillo += b.amarillo || 0;
-            acc.verde += b.verde || 0;
+      const ui = { mode: "activo", pauseCategory: "" };
+
+      const flattenTickets = (groups = []) =>
+        groups.flatMap((g) => (g.tickets || []).map((t) => ({ ...t, group: g.group || "Sin grupo" })));
+
+      const filterTickets = (tickets) => {
+        if (ui.mode === "pausa") {
+          return tickets.filter((t) => {
+            const hasPause = t.pause_threshold_days && t.pause_threshold_days > 0;
+            const pauseCat = (t.pause_category || "").toUpperCase();
+            const matchCat = ui.pauseCategory ? pauseCat === ui.pauseCategory : true;
+            return hasPause && matchCat;
+          });
+        }
+        if (ui.mode === "recordatorio") {
+          return tickets.filter((t) => (t.threshold_days || 0) > 0 && (t.threshold_days || 0) <= 3);
+        }
+        return tickets.filter((t) => (t.threshold_days || 0) > 0);
+      };
+
+      const bandKeyFor = (ticket) => {
+        if (ui.mode === "pausa") {
+          return ticket.pause_band || "verde";
+        }
+        return ticket.risk_band || "verde";
+      };
+
+      const ratioFor = (ticket) => {
+        if (ui.mode === "pausa") {
+          return ticket.pause_ratio || 0;
+        }
+        return ticket.ratio || 0;
+      };
+
+      const bandsFromTickets = (tickets = []) => {
+        return tickets.reduce(
+          (acc, t) => {
+            const band = bandKeyFor(t);
+            acc[band] = (acc[band] || 0) + 1;
             return acc;
           },
           { rojo: 0, naranja: 0, amarillo: 0, verde: 0 },
         );
       };
 
-      const topGroups = (groups = [], limit = 8) => {
-        const clone = [...groups];
-        clone.sort((a, b) => {
-          const highA = (a.bands?.rojo || 0) + (a.bands?.naranja || 0);
-          const highB = (b.bands?.rojo || 0) + (b.bands?.naranja || 0);
+      const aggregateGroups = (tickets = []) => {
+        const groups = {};
+        tickets.forEach((t) => {
+          const key = t.group || "Sin grupo";
+          const band = bandKeyFor(t);
+          const bucket = groups[key] || { group: key, bands: { rojo: 0, naranja: 0, amarillo: 0, verde: 0 }, tickets: [] };
+          bucket.bands[band] = (bucket.bands[band] || 0) + 1;
+          bucket.tickets.push(t);
+          groups[key] = bucket;
+        });
+        return Object.values(groups).sort((a, b) => {
+          const highA = (a.bands.rojo || 0) + (a.bands.naranja || 0);
+          const highB = (b.bands.rojo || 0) + (b.bands.naranja || 0);
           return highB - highA;
         });
-        return clone.slice(0, limit);
       };
 
-      const topTechnicians = (groups = [], limit = 8) => {
+      const topTechnicians = (tickets = [], limit = 8) => {
         const counts = {};
-        groups.forEach((g) => {
-          (g.tickets || []).forEach((ticket) => {
-            const band = ticket.risk_band;
-            if (band !== "rojo" && band !== "naranja") return;
-            const tech =
-              ticket.technician_name ||
-              ticket.technician ||
-              ticket.technician_id ||
-              "Sin técnico";
-            counts[tech] = (counts[tech] || 0) + 1;
-          });
+        tickets.forEach((t) => {
+          const band = bandKeyFor(t);
+          if (band !== "rojo" && band !== "naranja") return;
+          const tech = t.technician_name || t.technician || t.technician_id || "Sin técnico";
+          counts[tech] = (counts[tech] || 0) + 1;
         });
         return Object.entries(counts)
           .sort((a, b) => b[1] - a[1])
@@ -2106,15 +2198,9 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           .map(([name, count]) => ({ name, count }));
       };
 
-      const topTickets = (groups = [], limit = 10) => {
-        const all = [];
-        groups.forEach((g) => {
-          (g.tickets || []).forEach((t) => {
-            all.push({ ...t, group: g.group });
-          });
-        });
-        all.sort((a, b) => (b.ratio || 0) - (a.ratio || 0));
-        return all.slice(0, limit);
+      const topTickets = (tickets = [], limit = 10) => {
+        const sorted = [...tickets].sort((a, b) => (ratioFor(b) || 0) - (ratioFor(a) || 0));
+        return sorted.slice(0, limit);
       };
 
       const destroyChart = (key) => {
@@ -2239,8 +2325,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         }
         list.innerHTML = tickets
           .map((t) => {
-            const pct = Math.round((t.ratio || 0) * 100);
-            const band = t.risk_band || "verde";
+            const pct = Math.round((ratioFor(t) || 0) * 100);
+            const band = bandKeyFor(t);
             const link = t.ticket_link ? `<a href="${t.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-";
             return `<div class="ticket">
               <h4>#${t.ticket_id || "-"} · ${t.subject || "Sin asunto"}</h4>
@@ -2258,23 +2344,50 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       async function loadOps() {
         const ops = await fetch(baseUrl + "/dashboard/data/operations").then((r) => r.json());
         const groups = ops.groups || [];
+        const tickets = filterTickets(flattenTickets(groups));
+        const grouped = aggregateGroups(tickets);
+        const totals = bandsFromTickets(tickets);
+        const high = (totals.rojo || 0) + (totals.naranja || 0);
+
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
-        const totals = sumBands(groups);
-        const high = totals.rojo + totals.naranja;
         document.getElementById("kpi-high").textContent = high;
         document.getElementById("kpi-mid").textContent = totals.amarillo;
         document.getElementById("kpi-low").textContent = totals.verde;
         document.getElementById("kpi-groups").textContent = groups.length;
 
         renderBandsChart(totals);
-        const prioritized = topGroups(groups, 8);
+        const prioritized = grouped.slice(0, 8);
         renderGroupStacked(prioritized);
         renderGroupTable(prioritized);
-        renderTechChart(topTechnicians(groups, 8));
-        renderTickets(topTickets(groups, 10));
+        renderTechChart(topTechnicians(tickets, 8));
+        renderTickets(topTickets(tickets, 10));
       }
 
+      const wireFilters = () => {
+        const modeButtons = document.querySelectorAll("#modeFilters button[data-mode]");
+        const pauseChips = document.querySelectorAll("#pauseChips .chip-btn");
+        modeButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            modeButtons.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            ui.mode = btn.getAttribute("data-mode") || "activo";
+            const pauseWrap = document.getElementById("pauseChips");
+            if (pauseWrap) pauseWrap.style.display = ui.mode === "pausa" ? "inline-flex" : "none";
+            loadOps().catch((err) => console.error(err));
+          });
+        });
+        pauseChips.forEach((chip) => {
+          chip.addEventListener("click", () => {
+            pauseChips.forEach((c) => c.classList.remove("active"));
+            chip.classList.add("active");
+            ui.pauseCategory = chip.getAttribute("data-pause") || "";
+            loadOps().catch((err) => console.error(err));
+          });
+        });
+      };
+
       document.addEventListener("DOMContentLoaded", () => {
+        wireFilters();
         loadOps().catch((err) => console.error(err));
       });
     </script>
