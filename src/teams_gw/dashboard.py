@@ -1580,14 +1580,14 @@ RISK_TEMPLATE = """<!DOCTYPE html>
       .hero-card {
         background: #0b1120;
         color: #f8fafc;
-        padding: 12px 14px;
-        border-radius: 14px;
-        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.32);
-        min-width: 220px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.28);
+        min-width: 200px;
         max-width: 320px;
         width: fit-content;
       }
-      .hero-number { font-size: 24px; font-weight: 700; margin: 4px 0; color: #f8fafc; }
+      .hero-number { font-size: 22px; font-weight: 700; margin: 2px 0; color: #f8fafc; }
       .hero-card p { color: #e2e8f0; }
       .kpi-grid {
         display: grid;
