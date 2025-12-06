@@ -419,7 +419,7 @@ async def dashboard_risk_summary():
 @app.get("/controller/tactical")
 async def controller_tactical_proxy():
     base = _controller_base_url()
-    url = f"{base}/controller/tactical"
+    url = f"{base}/tactical"
     try:
         return await fetch_controller_generic(url)
     except Exception as exc:
@@ -429,7 +429,7 @@ async def controller_tactical_proxy():
 @app.get("/controller/executive")
 async def controller_executive_proxy():
     base = _controller_base_url()
-    url = f"{base}/controller/executive"
+    url = f"{base}/executive"
     try:
         return await fetch_controller_generic(url)
     except Exception as exc:
