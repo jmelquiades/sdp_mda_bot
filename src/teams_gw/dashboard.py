@@ -1337,6 +1337,23 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       .mini-table { width:100%; border-collapse:collapse; font-size:13px; }
       .mini-table th, .mini-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
       .mini-table th { color:#475569; }
+      .bar { height:8px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin:6px 0; }
+      .bar-fill { height:100%; background: linear-gradient(90deg,#6366f1,#22c55e); }
+      .bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+        margin: 6px 0;
+      }
+      .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #22c55e);
+      }
+      .spark {
+        width: 100%;
+        height: 60px;
+      }
     </style>
   </head>
   <body>
@@ -1357,6 +1374,8 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         <div class="card"><h3>Bandas actuales</h3><div id="tact-bands"></div></div>
         <div class="card"><h3>Pausa por categoría</h3><div id="tact-pause"></div></div>
         <div class="card"><h3>Top grupos (activo promedio)</h3><div id="tact-groups"></div></div>
+        <div class="card"><h3>Tiempo por sitio (activo/asignado)</h3><div id="tact-sites"></div></div>
+        <div class="card"><h3>Recordatorios disparados</h3><div id="tact-rem"></div></div>
       </div>
     </div>
     <script>
@@ -1367,10 +1386,20 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         if (Number.isNaN(d.getTime())) return val;
         return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
       };
+      const buildBar = (value, max, label) => {
+        const pct = max ? Math.min(100, (value / max) * 100) : 0;
+        return `<div class="muted">${label}</div><div class="bar"><div class="bar-fill" style="width:${pct}%;"></div></div>`;
+      };
       fetch("/controller/tactical").then(r => r.json()).then(data => {
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
-        const trend = (data.backlog_trend||[]).slice(0,12).map(t=>`${fmtDate(t.timestamp)} · ${t.count}`).join("<br>") || "Sin datos";
-        document.getElementById("tact-trend").innerHTML = trend;
+        const trend = (data.backlog_trend||[]).slice(0,20).reverse();
+        if (trend.length) {
+          const maxY = Math.max(...trend.map(t=>t.count));
+          const points = trend.map((t,i)=>`${(i/(trend.length-1))*100},${100 - (t.count/maxY)*100}`).join(" ");
+          document.getElementById("tact-trend").innerHTML = `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/></svg>`;
+        } else {
+          document.getElementById("tact-trend").innerHTML = "Sin datos";
+        }
         const bands = data.bands || {};
         document.getElementById("tact-bands").innerHTML = ["rojo","naranja","amarillo","verde"].map(b=>`<span class="chip">${b}: ${bands[b]||0}</span>`).join("") || "<span class='muted'>Sin datos</span>";
         const pause = data.pause_mix || {};
@@ -1379,6 +1408,11 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         document.getElementById("tact-groups").innerHTML = groups.length
           ? `<table class="mini-table"><thead><tr><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Tickets</th></tr></thead><tbody>${groups.map(g=>`<tr><td>${g.group}</td><td>${g.avg_active_days}</td><td>${g.avg_pause_days}</td><td>${g.count}</td></tr>`).join("")}</tbody></table>`
           : "<span class='muted'>Sin datos</span>";
+        const sites = data.site_times || [];
+        document.getElementById("tact-sites").innerHTML = sites.length
+          ? `<table class="mini-table"><thead><tr><th>Sitio</th><th>Activo</th><th>Asignado</th><th>Tickets</th></tr></thead><tbody>${sites.map(s=>`<tr><td>${s.site}</td><td>${s.avg_active_days}</td><td>${s.avg_assigned_days}</td><td>${s.count}</td></tr>`).join("")}</tbody></table>`
+          : "<span class='muted'>Sin datos</span>";
+        document.getElementById("tact-rem").innerHTML = `<span class="chip">Recordatorios: ${data.reminders || 0}</span>`;
       }).catch(()=> {
         document.getElementById("tact-grid").innerHTML = "<p class='muted'>No se pudo cargar.</p>";
       });
@@ -1435,18 +1469,34 @@ EJECUTIVO_TEMPLATE = """<!DOCTYPE html>
         const base = (val.includes("@") ? val.split("@")[0] : val).replace(/[._]/g, " ");
         return base.split(" ").map(w => w ? w[0].toUpperCase()+w.slice(1) : "").join(" ").trim();
       };
+      const bar = (val,max,label)=>{ const pct=max?Math.min(100,(val/max)*100):0; return `<div class="muted">${label}</div><div class="bar"><div class="bar-fill" style="width:${pct}%;"></div></div>`; };
       fetch("/controller/executive").then(r => r.json()).then(data => {
         document.getElementById("last-updated").textContent = new Date().toLocaleString("es-PE", { dateStyle:"short", timeStyle:"short", timeZone:"America/Lima" });
         const prio = data.priority_distribution || [];
-        document.getElementById("exec-prio").innerHTML = prio.map(p=>`<span class="chip">${p.label}: ${p.count}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        if (prio.length) {
+          const maxP = Math.max(...prio.map(p=>p.count));
+          document.getElementById("exec-prio").innerHTML = prio.map(p=>bar(p.count,maxP,`${p.label}: ${p.count}`)).join("");
+        } else {
+          document.getElementById("exec-prio").innerHTML = "<span class='muted'>Sin datos</span>";
+        }
         const reqs = data.top_requesters || [];
         document.getElementById("exec-req").innerHTML = reqs.length
           ? `<table class="mini-table"><thead><tr><th>Solicitante</th><th>Tickets</th><th>Activo (avg)</th><th>Pausa (avg)</th></tr></thead><tbody>${reqs.map(r=>`<tr><td>${fmtName(r.requester)}</td><td>${r.count}</td><td>${r.avg_active_days}</td><td>${r.avg_pause_days}</td></tr>`).join("")}</tbody></table>`
           : "<span class='muted'>Sin datos</span>";
         const pause = data.pause_mix || [];
-        document.getElementById("exec-pause").innerHTML = pause.map(p=>`<span class="chip">${p.category||"N/A"}: ${p.tickets} (${p.pause_days}d)</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        if (pause.length) {
+          const maxPause = Math.max(...pause.map(p=>p.tickets));
+          document.getElementById("exec-pause").innerHTML = pause.map(p=>bar(p.tickets,maxPause,`${p.category||"N/A"}: ${p.tickets} (${p.pause_days}d)`)).join("");
+        } else {
+          document.getElementById("exec-pause").innerHTML = "<span class='muted'>Sin datos</span>";
+        }
         const sites = data.backlog_by_site || [];
-        document.getElementById("exec-site").innerHTML = sites.map(s=>`<span class="chip">${s.site}: ${s.count}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        if (sites.length) {
+          const maxSite = Math.max(...sites.map(s=>s.count));
+          document.getElementById("exec-site").innerHTML = sites.map(s=>bar(s.count,maxSite,`${s.site}: ${s.count}`)).join("");
+        } else {
+          document.getElementById("exec-site").innerHTML = "<span class='muted'>Sin datos</span>";
+        }
       }).catch(()=> {
         document.getElementById("exec-grid").innerHTML = "<p class='muted'>No se pudo cargar.</p>";
       });
