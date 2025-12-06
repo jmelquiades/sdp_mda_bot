@@ -1366,7 +1366,6 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
           </div>
           <div id="tact-trend" class="muted">Cargando…</div>
         </div>
-        <div class="card"><h3>Bandas actuales</h3><div id="tact-bands"></div></div>
         <div class="card"><h3>Pausa por categoría</h3><div id="tact-pause"></div></div>
         <div class="card"><h3>Top grupos (activo promedio)</h3><div id="tact-groups"></div></div>
         <div class="card"><h3>Tiempo por sitio (activo/asignado)</h3><div id="tact-sites"></div></div>
@@ -1437,8 +1436,6 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         filtersBox.appendChild(buildSelect("f-group", groupOptions, (val)=>{ filterState.group=val; redrawTrend(); }));
         filtersBox.appendChild(buildSelect("f-tech", techOptions, (val)=>{ filterState.tech=val; redrawTrend(); }));
         redrawTrend();
-        const bands = data.bands || {};
-        document.getElementById("tact-bands").innerHTML = ["rojo","naranja","amarillo","verde"].map(b=>`<span class="chip">${b}: ${bands[b]||0}</span>`).join("") || "<span class='muted'>Sin datos</span>";
         const pause = data.pause_mix || {};
         document.getElementById("tact-pause").innerHTML = Object.entries(pause).map(([k,v])=>`<span class="chip">${k||"N/A"}: ${v}</span>`).join("") || "<span class='muted'>Sin datos</span>";
         const groups = data.top_groups || [];
