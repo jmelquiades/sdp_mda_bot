@@ -36,6 +36,8 @@ from .dashboard import (
     render_dashboard_html,
     render_risk_dashboard_html,
     render_service_dashboard_html,
+    render_tactical_dashboard_html,
+    render_executive_dashboard_html,
 )
 from .health import router as health_router
 from .settings import settings
