@@ -1825,7 +1825,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <thead>
               <tr>
                 <th>Ticket</th>
-                <th>Asunto</th>
                 <th>Solicitante</th>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
@@ -1835,7 +1834,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
                 <th></th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="11" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1972,7 +1971,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days, item.pause_category);
           return `<tr>
             <td>#${item.ticket_id || "-"}</td>
-            <td>${item.subject || "-"}</td>
             <td>${item.group || "-"}</td>
             <td>${buildRiskCell(item.ratio, band, item.threshold_days, item.active_days)}</td>
             <td>${pauseCell}</td>
@@ -2134,7 +2132,6 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           const pauseCell = buildPauseCell(item.pause_ratio, item.pause_band, item.pause_days, item.pause_threshold_days, item.pause_category);
           return `<tr>
             <td class="subject-cell">#${item.ticket_id}</td>
-            <td class="subject-cell">${item.subject || "-"}</td>
             <td>${item.requester || "-"}</td>
             <td>${item.category || "-"}</td>
             <td>${item.subcategory || "-"}</td>
@@ -2143,7 +2140,7 @@ RISK_TEMPLATE = """<!DOCTYPE html>
             <td>${pauseCell}</td>
             <td>${link}</td>
           </tr>`;
-        }).join("") || `<tr><td colspan="9" class="muted">Sin tickets filtrados.</td></tr>`;
+        }).join("") || `<tr><td colspan="8" class="muted">Sin tickets filtrados.</td></tr>`;
         body.innerHTML = rows;
         const serviceFilters = document.getElementById("service-filters");
         if (!serviceFilters) return;
