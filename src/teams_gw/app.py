@@ -416,6 +416,26 @@ async def dashboard_risk_summary():
         log.error("Error consulting controller risk summary: %s", exc)
         raise HTTPException(status_code=502, detail="controller_risk_summary_unavailable")
 
+@app.get("/controller/tactical")
+async def controller_tactical_proxy():
+    base = _controller_base_url()
+    url = f"{base}/controller/tactical"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller tactical: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_tactical_unavailable")
+
+@app.get("/controller/executive")
+async def controller_executive_proxy():
+    base = _controller_base_url()
+    url = f"{base}/controller/executive"
+    try:
+        return await fetch_controller_generic(url)
+    except Exception as exc:
+        log.error("Error consulting controller executive: %s", exc)
+        raise HTTPException(status_code=502, detail="controller_executive_unavailable")
+
 
 @app.get("/dashboard/data/operations")
 async def dashboard_operations():
