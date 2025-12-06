@@ -2240,11 +2240,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             const lvlIdx = LEVELS_ACTIVE.findIndex((l) => l.id === ui.level);
             if (lvlIdx === -1) return true;
             const current = LEVELS_ACTIVE[lvlIdx];
-            const prev = LEVELS_ACTIVE[lvlIdx - 1];
-            const low = prev ? Number(prev.threshold) : 0;
-            const high = Number(current.threshold) || Number.POSITIVE_INFINITY;
-            const days = Number(t.active_days || 0);
-            return days >= low && days < high;
+            return Number(t.threshold_days || 0) === Number(current.threshold || 0);
           }
           return true;
         });
