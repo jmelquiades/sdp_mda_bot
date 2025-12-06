@@ -2372,7 +2372,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
 
       const topTickets = (tickets = [], limit = 10) => {
         const sorted = [...tickets].sort((a, b) => (ratioFor(b) || 0) - (ratioFor(a) || 0));
-        return sorted.slice(0, limit);
+        return sorted;
       };
 
       const destroyChart = (key) => {
