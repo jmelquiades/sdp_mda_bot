@@ -2388,7 +2388,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         charts.bands = new Chart(ctx, {
           type: "doughnut",
           data: {
-            labels: ["Rojo", "Naranja", "Amarillo", "Verde"],
+            labels: ["Riesgo Alto", "En Riesgo", "Seguimiento", "Estables"],
             datasets: [
               {
                 data: [totals.rojo, totals.naranja, totals.amarillo, totals.verde],
@@ -2443,11 +2443,16 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       const renderGroupStacked = (groups) => {
         destroyChart("groups");
         const labels = groups.map((g) => g.group || "Sin grupo");
-        const bands = ["rojo", "naranja", "amarillo", "verde"];
-        const datasets = bands.map((band) => ({
-          label: band[0].toUpperCase() + band.slice(1),
-          data: groups.map((g) => g.bands?.[band] || 0),
-          backgroundColor: colors[band],
+        const bandMeta = [
+          { key: "rojo", label: "Riesgo Alto" },
+          { key: "naranja", label: "En Riesgo" },
+          { key: "amarillo", label: "Seguimiento" },
+          { key: "verde", label: "Estables" },
+        ];
+        const datasets = bandMeta.map(({ key, label }) => ({
+          label,
+          data: groups.map((g) => g.bands?.[key] || 0),
+          backgroundColor: colors[key],
           stack: "risk",
           borderRadius: 6,
         }));
