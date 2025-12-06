@@ -188,6 +188,11 @@ def render_risk_dashboard_html() -> HTMLResponse:
     return HTMLResponse(RISK_TEMPLATE)
 
 
+def render_operativo_dashboard_html() -> HTMLResponse:
+    # Misma estructura que /dashboard/risk para comparación visual.
+    return HTMLResponse(RISK_TEMPLATE)
+
+
 def render_tactical_dashboard_html() -> HTMLResponse:
     return HTMLResponse(TACTICO_TEMPLATE)
 
