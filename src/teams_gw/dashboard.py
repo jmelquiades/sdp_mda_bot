@@ -2071,7 +2071,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         <div class="segmented" id="modeFilters">
           <button class="active" data-mode="activo">Activo</button>
           <button data-mode="pausa">Pausa</button>
-          <button data-mode="recordatorio">Recordatorio</button>
         </div>
         <div class="chips" id="pauseChips" style="display:none;">
           <button class="chip-btn active" data-pause="">Todas</button>
@@ -2079,6 +2078,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           <button class="chip-btn" data-pause="PROVEEDOR">Proveedor</button>
           <button class="chip-btn" data-pause="INTERNA">Interna</button>
         </div>
+        <div class="chips" id="pauseThreshChips" style="display:none;"></div>
         <div class="chips" id="levelChips" style="display:none;"></div>
       </div>
 
@@ -2219,7 +2219,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       const charts = {};
       const colors = { rojo: "#ef4444", naranja: "#f97316", amarillo: "#facc15", verde: "#22c55e" };
       const LEVELS_ACTIVE = [
-        { id: "recordatorio_tecnico", label: "Recordatorio", threshold: 3 },
         { id: "Escalamiento_Supervisor", label: "Supervisor de Mesa", threshold: 7 },
         { id: "alerta_jefe_mesa", label: "Jefe de Mesa", threshold: 15 },
         { id: "alerta_jefe_operacion", label: "Jefe de Operaciones", threshold: 25 },
@@ -2234,7 +2233,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short", timeZone: "America/Lima" });
       };
 
-      const ui = { mode: "activo", pauseCategory: "", level: "" };
+      const ui = { mode: "activo", pauseCategory: "", pauseThreshold: "", level: "" };
 
       const flattenTickets = (groups = []) =>
         groups.flatMap((g) => (g.tickets || []).map((t) => ({ ...t, group: g.group || "Sin grupo" })));
@@ -2245,11 +2244,9 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             const hasPause = t.pause_threshold_days && t.pause_threshold_days > 0;
             const pauseCat = (t.pause_category || "").toUpperCase();
             const matchCat = ui.pauseCategory ? pauseCat === ui.pauseCategory : true;
-            return hasPause && matchCat;
+            const matchThresh = ui.pauseThreshold ? Number(t.pause_threshold_days || 0) === Number(ui.pauseThreshold) : true;
+            return hasPause && matchCat && matchThresh;
           });
-        }
-        if (ui.mode === "recordatorio") {
-          return tickets.filter((t) => (t.threshold_days || 0) > 0 && (t.threshold_days || 0) <= 3);
         }
         return tickets.filter((t) => {
           const isActive = (t.threshold_days || 0) > 0;
@@ -2627,6 +2624,28 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         }
         renderServiceSummary(tickets);
         renderPauseSummary(tickets);
+        const pauseThreshWrap = document.getElementById("pauseThreshChips");
+        if (pauseThreshWrap && !pauseThreshWrap.hasChildNodes()) {
+          const thresholds = Array.from(new Set((groups.flatMap(g => g.tickets || []) || [])
+            .filter(t => (t.pause_threshold_days || 0) > 0)
+            .map(t => Number(t.pause_threshold_days || 0)))).sort((a,b)=>a-b);
+          const mk = (label, val, active=false) => {
+            const btn = document.createElement("button");
+            btn.className = "chip-btn" + (active ? " active" : "");
+            btn.textContent = label;
+            btn.setAttribute("data-thresh", val ?? "");
+            btn.addEventListener("click", () => {
+              pauseThreshWrap.querySelectorAll(".chip-btn").forEach(c => c.classList.remove("active"));
+              btn.classList.add("active");
+              ui.pauseThreshold = val || "";
+              loadOps().catch(console.error);
+            });
+            return btn;
+          };
+          pauseThreshWrap.appendChild(mk("Todos los umbrales", "", true));
+          thresholds.forEach(t => pauseThreshWrap.appendChild(mk(`${t}d`, t)));
+          pauseThreshWrap.style.display = ui.mode === "pausa" ? "inline-flex" : "none";
+        }
       }
 
       const wireFilters = () => {
@@ -2655,11 +2674,18 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             btn.classList.add("active");
             ui.mode = btn.getAttribute("data-mode") || "activo";
             const pauseWrap = document.getElementById("pauseChips");
+            const pauseThresh = document.getElementById("pauseThreshChips");
             if (pauseWrap) pauseWrap.style.display = ui.mode === "pausa" ? "inline-flex" : "none";
+            if (pauseThresh) pauseThresh.style.display = ui.mode === "pausa" ? "inline-flex" : "none";
             if (levelChips) levelChips.style.display = ui.mode === "activo" ? "inline-flex" : "none";
             if (ui.mode !== "activo") {
               ui.level = "";
               if (levelChips) levelChips.querySelectorAll(".chip-btn").forEach((c, idx) => c.classList.toggle("active", idx === 0));
+            }
+            if (ui.mode !== "pausa") {
+              ui.pauseThreshold = "";
+              const threshWrap = document.getElementById("pauseThreshChips");
+              if (threshWrap) threshWrap.querySelectorAll(".chip-btn").forEach((c, idx) => c.classList.toggle("active", idx === 0));
             }
             loadOps().catch((err) => console.error(err));
           });
@@ -2672,6 +2698,17 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             loadOps().catch((err) => console.error(err));
           });
         });
+        const pauseThreshWrap = document.getElementById("pauseThreshChips");
+        if (pauseThreshWrap) {
+          pauseThreshWrap.querySelectorAll(".chip-btn").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              pauseThreshWrap.querySelectorAll(".chip-btn").forEach((c) => c.classList.remove("active"));
+              chip.classList.add("active");
+              ui.pauseThreshold = chip.getAttribute("data-thresh") || "";
+              loadOps().catch((err) => console.error(err));
+            });
+          });
+        }
         if (levelChips) {
           levelChips.querySelectorAll(".chip-btn").forEach((chip) => {
             chip.addEventListener("click", () => {
