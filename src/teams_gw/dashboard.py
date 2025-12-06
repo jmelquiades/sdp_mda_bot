@@ -425,6 +425,31 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         color: #475569;
         font-size: 13px;
       }
+      .section-block {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+      }
+      .section-block .card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 14px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      }
+      .mini-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .mini-table th,
+      .mini-table td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #f1f5f9;
+        text-align: left;
+      }
+      .mini-table th { color: #475569; }
       .chip-list {
         display: flex;
         flex-wrap: wrap;
@@ -1838,6 +1863,16 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           </table>
         </div>
       </div>
+      <div class="section-block" id="tactical-section">
+        <div class="card">
+          <h3>Vista táctica</h3>
+          <div id="tactical-content"><p class="muted small">Cargando…</p></div>
+        </div>
+        <div class="card">
+          <h3>Vista ejecutiva</h3>
+          <div id="executive-content"><p class="muted small">Cargando…</p></div>
+        </div>
+      </div>
     </div>
     <script>
       const fmtDate = (val) => {
@@ -1935,10 +1970,12 @@ RISK_TEMPLATE = """<!DOCTYPE html>
 
       async function loadAll(filters = {}) {
         uiState.filters = { ...uiState.filters, ...filters };
-        const [risk, ops, summary] = await Promise.all([
+        const [risk, ops, summary, tactical, executive] = await Promise.all([
           fetch(baseUrl + "/dashboard/data/risk").then(r => r.json()),
           fetch(baseUrl + "/dashboard/data/operations").then(r => r.json()).catch(() => ({groups: []})),
           fetch(baseUrl + "/dashboard/data/risk/summary").then(r => r.json()).catch(() => ({})),
+          fetch(baseUrl + "/controller/tactical").then(r => r.json()).catch(() => ({})),
+          fetch(baseUrl + "/controller/executive").then(r => r.json()).catch(() => ({})),
         ]);
         opsData = ops;
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
@@ -1963,6 +2000,8 @@ RISK_TEMPLATE = """<!DOCTYPE html>
         });
         renderSummary({ items: timeFiltered }, ops);
         renderFilters(summary, filters, items);
+        renderTactical(tactical);
+        renderExecutive(executive);
 
         const riskBody = document.querySelector("#risk-table tbody");
         const rows = timeFiltered.map(item => {
@@ -2201,6 +2240,64 @@ RISK_TEMPLATE = """<!DOCTYPE html>
           });
           serviceFilters.appendChild(dropdown);
         });
+      }
+
+      function renderTactical(data = {}) {
+        const container = document.getElementById("tactical-content");
+        if (!container) return;
+        const trend = (data.backlog_trend || []).slice(0, 10).reverse();
+        const bands = data.bands || {};
+        const pauseMix = data.pause_mix || {};
+        const topGroups = data.top_groups || [];
+        container.innerHTML = `
+          <div class="small muted">Backlog (últimas corridas)</div>
+          <div class="muted small">${trend.map(t => `${fmtDate(t.timestamp)} · ${t.count}`).join("<br>") || "Sin datos"}</div>
+          <div class="small muted" style="margin-top:8px;">Bandas actuales</div>
+          <div class="chip-list">
+            ${["rojo","naranja","amarillo","verde"].map(b=>`<span class="chip">${b}: ${bands[b]||0}</span>`).join("")}
+          </div>
+          <div class="small muted">Pausa por categoría</div>
+          <div class="chip-list">
+            ${Object.entries(pauseMix).map(([k,v])=>`<span class="chip">${k||"N/A"}: ${v}</span>`).join("") || "<span class='chip'>Sin datos</span>"}
+          </div>
+          <div class="small muted">Top grupos (activo promedio)</div>
+          <table class="mini-table">
+            <thead><tr><th>Grupo</th><th>Activo (d)</th><th>Pausa (d)</th><th>Tickets</th></tr></thead>
+            <tbody>
+              ${topGroups.map(g=>`<tr><td>${g.group}</td><td>${g.avg_active_days}</td><td>${g.avg_pause_days}</td><td>${g.count}</td></tr>`).join("") || "<tr><td colspan='4' class='muted'>Sin datos</td></tr>"}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function renderExecutive(data = {}) {
+        const container = document.getElementById("executive-content");
+        if (!container) return;
+        const priority = data.priority_distribution || [];
+        const requesters = data.top_requesters || [];
+        const pauseMix = data.pause_mix || [];
+        const sites = data.backlog_by_site || [];
+        container.innerHTML = `
+          <div class="small muted">Prioridad (foto actual)</div>
+          <div class="chip-list">
+            ${priority.map(p=>`<span class="chip">${p.label}: ${p.count}</span>`).join("") || "<span class='chip'>Sin datos</span>"}
+          </div>
+          <div class="small muted">Top solicitantes</div>
+          <table class="mini-table">
+            <thead><tr><th>Solicitante</th><th>Tickets</th><th>Activo (avg)</th><th>Pausa (avg)</th></tr></thead>
+            <tbody>
+              ${requesters.map(r=>`<tr><td>${fmtName(r.requester)}</td><td>${r.count}</td><td>${r.avg_active_days}</td><td>${r.avg_pause_days}</td></tr>`).join("") || "<tr><td colspan='4' class='muted'>Sin datos</td></tr>"}
+            </tbody>
+          </table>
+          <div class="small muted">Pausa por categoría</div>
+          <div class="chip-list">
+            ${pauseMix.map(p=>`<span class="chip">${p.category||"N/A"}: ${p.tickets} (${p.pause_days}d)</span>`).join("") || "<span class='chip'>Sin datos</span>"}
+          </div>
+          <div class="small muted">Backlog por sitio</div>
+          <div class="chip-list">
+            ${sites.map(s=>`<span class="chip">${s.site}: ${s.count}</span>`).join("") || "<span class='chip'>Sin datos</span>"}
+          </div>
+        `;
       }
 
       const tabs = document.getElementById("view-tabs");
