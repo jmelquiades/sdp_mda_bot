@@ -1329,8 +1329,8 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       .hero { display:flex; justify-content: space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
       .hero h1 { margin:0; font-size:28px; color:#0f172a; }
       .hero .muted { color:#475569; margin:4px 0 0; }
-      .card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:12px; margin-top:14px; }
-      .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:12px; box-shadow:0 12px 28px rgba(15,23,42,0.08); }
+      .card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(420px,1fr)); gap:12px; margin-top:14px; }
+      .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:16px; box-shadow:0 12px 28px rgba(15,23,42,0.08); }
       .card h3 { margin:0 0 8px; font-size:16px; color:#0f172a; }
       .muted { color:#475569; font-size:13px; margin:0 0 8px; }
       .chip { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #e2e8f0; background:#f8fafc; font-size:12px; margin:2px; }
