@@ -1400,7 +1400,7 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       fetch("/controller/tactical").then(r => r.json()).then(data => {
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
         const trend = (data.backlog_trend||[]).slice(0,20).reverse();
-        const rulesSeries = data.rules_series || [];
+        const rulesSeries = data.rules_series_daily || data.rules_series || [];
         const groupsSet = new Set(); const techSet = new Set();
         rulesSeries.forEach(r => {
           Object.keys(r.by_group || {}).forEach(g => groupsSet.add(g));
