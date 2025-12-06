@@ -1370,7 +1370,13 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
       <div class="card-grid" id="tact-grid">
-        <div class="card"><h3>Backlog (últimas corridas)</h3><div id="tact-trend" class="muted">Cargando…</div></div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+            <h3 style="margin:0;">Backlog (últimas corridas)</h3>
+            <div id="tact-filters" style="display:flex; gap:6px;"></div>
+          </div>
+          <div id="tact-trend" class="muted">Cargando…</div>
+        </div>
         <div class="card"><h3>Bandas actuales</h3><div id="tact-bands"></div></div>
         <div class="card"><h3>Pausa por categoría</h3><div id="tact-pause"></div></div>
         <div class="card"><h3>Top grupos (activo promedio)</h3><div id="tact-groups"></div></div>
@@ -1390,16 +1396,53 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         const pct = max ? Math.min(100, (value / max) * 100) : 0;
         return `<div class="muted">${label}</div><div class="bar"><div class="bar-fill" style="width:${pct}%;"></div></div>`;
       };
+      const buildSelect = (id, opts, onChange) => {
+        const sel = document.createElement("select");
+        sel.id = id;
+        opts.forEach(o => {
+          const opt = document.createElement("option");
+          opt.value = o.value;
+          opt.textContent = o.label;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener("change", () => onChange(sel.value || ""));
+        return sel;
+      };
       fetch("/controller/tactical").then(r => r.json()).then(data => {
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
         const trend = (data.backlog_trend||[]).slice(0,20).reverse();
-        if (trend.length) {
-          const maxY = Math.max(...trend.map(t=>t.count));
-          const points = trend.map((t,i)=>`${(i/(trend.length-1))*100},${100 - (t.count/maxY)*100}`).join(" ");
-          document.getElementById("tact-trend").innerHTML = `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/></svg>`;
-        } else {
-          document.getElementById("tact-trend").innerHTML = "Sin datos";
-        }
+        const rulesSeries = data.rules_series || [];
+        const groupsSet = new Set(); const techSet = new Set();
+        rulesSeries.forEach(r => {
+          Object.keys(r.by_group || {}).forEach(g => groupsSet.add(g));
+          Object.keys(r.by_tech || {}).forEach(t => techSet.add(t));
+        });
+        const groupOptions = [{value:"", label:"Grupo (todos)"}].concat(Array.from(groupsSet).sort().map(g=>({value:g,label:g})));
+        const techOptions = [{value:"", label:"Técnico (todos)"}].concat(Array.from(techSet).sort().map(t=>({value:t,label:t})));
+        const filterState = { group: "", tech: "" };
+        const redrawTrend = () => {
+          const series = rulesSeries.slice(0,20).reverse();
+          const values = series.map(r => {
+            if (filterState.tech) return (r.by_tech && r.by_tech[filterState.tech]) || 0;
+            if (filterState.group) return (r.by_group && r.by_group[filterState.group]) || 0;
+            return r.total || 0;
+          });
+          if (!series.length) { document.getElementById("tact-trend").innerHTML = "Sin datos"; return; }
+          const maxY = Math.max(...values, 1);
+          const points = values.map((val,i)=>`${(i/(values.length-1))*100},${100 - (val/maxY)*100}`).join(" ");
+          const labels = series.map(r => r.run_started_at);
+          document.getElementById("tact-trend").innerHTML = `
+            <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/>
+            </svg>
+            <div class="muted small">Reglas activas/pausa disparadas (últimas corridas)</div>
+          `;
+        };
+        const filtersBox = document.getElementById("tact-filters");
+        filtersBox.innerHTML = "";
+        filtersBox.appendChild(buildSelect("f-group", groupOptions, (val)=>{ filterState.group=val; redrawTrend(); }));
+        filtersBox.appendChild(buildSelect("f-tech", techOptions, (val)=>{ filterState.tech=val; redrawTrend(); }));
+        redrawTrend();
         const bands = data.bands || {};
         document.getElementById("tact-bands").innerHTML = ["rojo","naranja","amarillo","verde"].map(b=>`<span class="chip">${b}: ${bands[b]||0}</span>`).join("") || "<span class='muted'>Sin datos</span>";
         const pause = data.pause_mix || {};
