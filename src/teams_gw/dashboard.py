@@ -1339,10 +1339,10 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       .mini-table th { color:#475569; }
       .bar { height:8px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin:6px 0; }
       .bar-fill { height:100%; background: linear-gradient(90deg,#3b82f6,#22c55e); }
-      .spark {
-        width: 100%;
-        height: 70px;
-      }
+      .spark { width: 100%; height: 140px; }
+      .axis-labels { display:flex; justify-content:space-between; font-size:11px; color:#475569; margin-top:4px; }
+      .axis-y { display:flex; flex-direction:column; justify-content:space-between; font-size:11px; color:#475569; margin-right:6px; }
+      .trend-area { display:flex; align-items:stretch; gap:6px; }
     </style>
   </head>
   <body>
@@ -1362,9 +1362,9 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         <div class="card">
           <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
             <h3 style="margin:0;">Backlog (últimas corridas)</h3>
-            <div id="tact-filters" style="display:flex; gap:6px;"></div>
+            <div id="tact-filters" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;"></div>
           </div>
-          <div id="tact-trend" class="muted">Cargando…</div>
+          <div id="tact-trend" class="muted" style="margin-top:6px;">Cargando…</div>
         </div>
         <div class="card"><h3>Pausa por categoría</h3><div id="tact-pause"></div></div>
         <div class="card"><h3>Top grupos (activo promedio)</h3><div id="tact-groups"></div></div>
@@ -1387,6 +1387,7 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       const buildSelect = (id, opts, onChange) => {
         const sel = document.createElement("select");
         sel.id = id;
+        sel.style.minWidth = "140px";
         opts.forEach(o => {
           const opt = document.createElement("option");
           opt.value = o.value;
@@ -1423,11 +1424,23 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
           const points = values.map((val,i)=>`${scaleX(i)},${scaleY(val)}`).join(" ");
           const areaPoints = [`0,100`, ...values.map((val,i)=>`${scaleX(i)},${scaleY(val)}`), `100,100`].join(" ");
           const labels = series.map(r => r.run_started_at);
+          const firstLabel = labels[0] ? fmtDate(labels[0]) : "";
+          const lastLabel = labels[labels.length-1] ? fmtDate(labels[labels.length-1]) : "";
           document.getElementById("tact-trend").innerHTML = `
-            <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <polygon points="${areaPoints}" fill="rgba(59,130,246,0.15)"></polygon>
-              <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/>
-            </svg>
+            <div class="trend-area">
+              <div class="axis-y">
+                <span>${maxY}</span>
+                <span>${Math.round(maxY/2)}</span>
+                <span>0</span>
+              </div>
+              <div style="flex:1;">
+                <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <polygon points="${areaPoints}" fill="rgba(59,130,246,0.15)"></polygon>
+                  <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${points}"/>
+                </svg>
+                <div class="axis-labels"><span>${firstLabel}</span><span>${lastLabel}</span></div>
+              </div>
+            </div>
             <div class="muted small" style="margin-top:4px;">Reglas activas/pausa disparadas (últimas corridas)</div>
           `;
         };
