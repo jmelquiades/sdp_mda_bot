@@ -2190,6 +2190,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
 
       <div class="view" id="view-servicios" style="display:none; display:grid; gap:14px;">
         <div class="card">
+          <div id="serviceFilters" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;"></div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; align-items:flex-start;">
             <div>
               <p class="eyebrow">Tipo de requerimiento</p>
@@ -2243,6 +2244,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
 
       const ui = { mode: "activo", pauseCategory: "", pauseThreshold: "", level: "" };
       const personaState = { group: null, technician: "" };
+      const serviceState = { base: [], filters: { request_type: "", category: "", subcategory: "", item: "" } };
 
       const flattenTickets = (groups = []) =>
         groups.flatMap((g) => (g.tickets || []).map((t) => ({ ...t, group: g.group || "Sin grupo" })));
@@ -2329,6 +2331,75 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           return `<tr><td>${cat}</td><td>${info.total}</td><td>${subs}</td></tr>`;
         }).join("");
         container.innerHTML = `<table><thead><tr><th>Categoría</th><th>Total</th><th>Subcategorías</th></tr></thead><tbody>${rows}</tbody></table>`;
+      };
+
+      const applyServiceFilters = (tickets) => {
+        const f = serviceState.filters;
+        return tickets.filter((t) => {
+          if (f.request_type && (t.request_type || "Sin dato") !== f.request_type) return false;
+          if (f.category && (t.category || "Sin dato") !== f.category) return false;
+          if (f.subcategory && (t.subcategory || "Sin dato") !== f.subcategory) return false;
+          if (f.item && (t.item || "Sin dato") !== f.item) return false;
+          return true;
+        });
+      };
+
+      const renderServiceFilters = (tickets) => {
+        const container = document.getElementById("serviceFilters");
+        if (!container) return;
+        serviceState.base = tickets;
+        const state = serviceState.filters;
+        container.innerHTML = "";
+        const buildOptions = (data, placeholder) => {
+          const opts = Object.keys(data)
+            .sort()
+            .map((k) => ({ value: k, label: `${k} (${data[k]})` }));
+          opts.unshift({ value: "", label: placeholder });
+          return opts;
+        };
+        const countField = (field, source) => {
+          const counts = {};
+          source.forEach((t) => {
+            const key = t[field] || "Sin dato";
+            counts[key] = (counts[key] || 0) + 1;
+          });
+          return counts;
+        };
+        const base = tickets;
+        const filteredReq = state.request_type ? base.filter(t => (t.request_type || "Sin dato") === state.request_type) : base;
+        const filteredCat = state.category ? filteredReq.filter(t => (t.category || "Sin dato") === state.category) : filteredReq;
+        const filteredSub = state.subcategory ? filteredCat.filter(t => (t.subcategory || "Sin dato") === state.subcategory) : filteredCat;
+        const selects = [
+          { id: "sf-req", field: "request_type", opts: buildOptions(countField("request_type", base), "Tipo (todos)"), value: state.request_type },
+          { id: "sf-cat", field: "category", opts: buildOptions(countField("category", filteredReq), "Categoría (todas)"), value: state.category },
+          { id: "sf-sub", field: "subcategory", opts: buildOptions(countField("subcategory", filteredCat), "Subcategoría (todas)"), value: state.subcategory },
+          { id: "sf-item", field: "item", opts: buildOptions(countField("item", filteredSub), "Item (todos)"), value: state.item },
+        ];
+        selects.forEach(({ id, field, opts, value }) => {
+          const sel = document.createElement("select");
+          sel.id = id;
+          sel.style.minWidth = "180px";
+          opts.forEach((opt) => {
+            const o = document.createElement("option");
+            o.value = opt.value;
+            o.textContent = opt.label;
+            if (opt.value === value) o.selected = true;
+            sel.appendChild(o);
+          });
+          sel.addEventListener("change", () => {
+            serviceState.filters[field] = sel.value || "";
+            renderServiceSection(serviceState.base);
+          });
+          container.appendChild(sel);
+        });
+      };
+
+      const renderServiceSection = (tickets) => {
+        serviceState.base = tickets;
+        const filtered = applyServiceFilters(tickets);
+        renderServiceFilters(tickets);
+        renderServiceCharts(filtered);
+        renderServiceSummary(filtered);
       };
 
       const renderServiceCharts = (tickets) => {
@@ -2754,8 +2825,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderTickets(topTickets(tickets, 10));
         renderPersonaGroups(grouped);
         renderPersonaTickets(grouped);
-        renderServiceSummary(tickets);
-        renderServiceCharts(tickets);
+        renderServiceSection(tickets);
         renderPauseSummary(tickets);
         const pauseThreshWrap = document.getElementById("pauseThreshChips");
         if (pauseThreshWrap && !pauseThreshWrap.hasChildNodes()) {
@@ -2863,6 +2933,9 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
               const isResumen = view === "resumen" && (v.id === "view-resumen-list");
               v.style.display = (v.id === `view-${view}` || v.id === `view-${view}-row` || isPersona || isResumen) ? "" : "none";
             });
+            if (view === "servicios") {
+              renderServiceSection(serviceState.base);
+            }
           });
         });
       };
