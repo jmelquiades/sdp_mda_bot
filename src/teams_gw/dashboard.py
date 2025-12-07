@@ -2188,17 +2188,9 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       </div>
       </div> <!-- views -->
 
-      <div class="view" id="view-servicios" style="display:none;">
+      <div class="view" id="view-servicios" style="display:none; display:grid; gap:14px;">
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-            <div>
-              <p class="eyebrow">Servicios</p>
-              <h3>Distribución por categoría</h3>
-              <p class="muted">Conteo de tickets por categoría y subcategoría.</p>
-            </div>
-          </div>
-          <div id="serviceSummary"></div>
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; margin-top:12px;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; align-items:flex-start;">
             <div>
               <p class="eyebrow">Tipo de requerimiento</p>
               <canvas id="serviceTypeChart" aria-label="Tipo de requerimiento"></canvas>
@@ -2216,6 +2208,16 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
               <canvas id="serviceItemChart" aria-label="Items"></canvas>
             </div>
           </div>
+        </div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <p class="eyebrow">Servicios</p>
+              <h3>Distribución por categoría</h3>
+              <p class="muted">Conteo de tickets por categoría y subcategoría.</p>
+            </div>
+          </div>
+          <div id="serviceSummary"></div>
         </div>
       </div>
 
