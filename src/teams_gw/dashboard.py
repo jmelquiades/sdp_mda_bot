@@ -2276,15 +2276,19 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         const days = ticket.active_days || 0;
         let current = LEVELS_ACTIVE[0];
         let next = null;
+        let found = false;
         for (let i = 0; i < LEVELS_ACTIVE.length; i++) {
           const lvl = LEVELS_ACTIVE[i];
-          if (days >= lvl.threshold) {
+          if (days < lvl.threshold) {
             current = lvl;
             next = LEVELS_ACTIVE[i + 1] || null;
-            continue;
+            found = true;
+            break;
           }
-          next = lvl;
-          break;
+        }
+        if (!found) {
+          current = LEVELS_ACTIVE[LEVELS_ACTIVE.length - 1];
+          next = null;
         }
         return { current, next, days };
       };
