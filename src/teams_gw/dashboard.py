@@ -2352,7 +2352,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         const filtered = applyServiceFilters(tickets);
         renderServiceFilters(tickets);
         renderServiceCharts(filtered);
-        renderServiceSummary(filtered);
         const ticketBox = document.getElementById("serviceTickets");
         if (ticketBox) {
           if (!filtered.length) {
