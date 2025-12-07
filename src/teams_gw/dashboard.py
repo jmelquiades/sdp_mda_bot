@@ -2152,11 +2152,24 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
                 <th>Grupo</th>
                 <th>Alto</th>
                 <th>Total</th>
-                <th>Banda</th>
               </tr>
             </thead>
-            <tbody><tr><td colspan="4" class="muted">Cargando…</td></tr></tbody>
+            <tbody><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="view" id="view-personas-detail" style="display:none;">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+            <div>
+              <p class="eyebrow">Tickets</p>
+              <h3 id="persona-group-title">Tickets del grupo</h3>
+              <p class="muted">Filtra por técnico dentro del grupo seleccionado.</p>
+            </div>
+            <div id="persona-tech-filter"></div>
+          </div>
+          <div id="persona-ticket-list" style="margin-top:10px;"></div>
         </div>
       </div>
 
@@ -2219,6 +2232,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       };
 
       const ui = { mode: "activo", pauseCategory: "", pauseThreshold: "", level: "" };
+      const personaState = { group: null, technician: "" };
 
       const flattenTickets = (groups = []) =>
         groups.flatMap((g) => (g.tickets || []).map((t) => ({ ...t, group: g.group || "Sin grupo" })));
@@ -2320,6 +2334,109 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           </tr>`;
         }).join("");
         container.innerHTML = `<table><thead><tr><th>Ticket</th><th>Categoría</th><th>Avance</th><th>Umbral</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+      };
+
+      const renderPersonaGroups = (groups) => {
+        const body = document.querySelector("#groupTable tbody");
+        if (!body) return;
+        if (!personaState.group && groups.length) {
+          personaState.group = groups[0].group;
+        }
+        body.innerHTML =
+          groups
+            .map((g) => {
+              const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
+              const total =
+                (g.bands?.rojo || 0) +
+                (g.bands?.naranja || 0) +
+                (g.bands?.amarillo || 0) +
+                (g.bands?.verde || 0);
+              const active = personaState.group && personaState.group === g.group;
+              return `<tr data-group="${g.group || ""}" class="${active ? "active" : ""}" style="cursor:pointer;">
+                <td>${g.group || "Sin grupo"}</td>
+                <td><span class="pill rojo">${high}</span></td>
+                <td>${total}</td>
+              </tr>`;
+            })
+            .join("") || `<tr><td colspan="3" class="muted">Sin datos.</td></tr>`;
+        body.querySelectorAll("tr[data-group]").forEach((row) => {
+          row.addEventListener("click", () => {
+            const grp = row.getAttribute("data-group") || "";
+            personaState.group = grp;
+            personaState.technician = "";
+            body.querySelectorAll("tr").forEach((r) => r.classList.remove("active"));
+            row.classList.add("active");
+            renderPersonaTickets(groups);
+          });
+        });
+      };
+
+      const renderPersonaTickets = (groups) => {
+        const container = document.getElementById("persona-ticket-list");
+        const title = document.getElementById("persona-group-title");
+        const techFilter = document.getElementById("persona-tech-filter");
+        if (!container || !title) return;
+        const grp = personaState.group;
+        const match = groups.find((g) => (g.group || "") === grp);
+        const tickets = match?.tickets || [];
+        title.textContent = grp ? `Tickets del grupo ${grp}` : "Tickets del grupo";
+        if (techFilter) {
+          techFilter.innerHTML = "";
+          const select = document.createElement("select");
+          select.style.minWidth = "200px";
+          const opts = [{ val: "", label: "Todos los técnicos" }];
+          const counts = {};
+          tickets.forEach((t) => {
+            const tech = t.technician_name || t.technician || t.technician_id || "Sin técnico";
+            counts[tech] = (counts[tech] || 0) + 1;
+          });
+          Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([tech, count]) => opts.push({ val: tech, label: `${tech} (${count})` }));
+          opts.forEach((o) => {
+            const opt = document.createElement("option");
+            opt.value = o.val;
+            opt.textContent = o.label;
+            if (personaState.technician === o.val) opt.selected = true;
+            select.appendChild(opt);
+          });
+          select.addEventListener("change", () => {
+            personaState.technician = select.value || "";
+            renderPersonaTickets(groups);
+          });
+          techFilter.appendChild(select);
+        }
+        const filtered = personaState.technician
+          ? tickets.filter((t) => {
+              const tech = t.technician_name || t.technician || t.technician_id || "Sin técnico";
+              return tech === personaState.technician;
+            })
+          : tickets;
+        if (!filtered.length) {
+          container.innerHTML = "<p class='muted'>Sin tickets para el grupo.</p>";
+          return;
+        }
+        const rows = filtered
+          .map((t) => {
+            const pct = Math.round((ratioFor(t) || 0) * 100);
+            const band = bandKeyFor(t);
+            const link = t.ticket_link ? `<a href="${t.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-";
+            const lvl = levelForTicket(t);
+            const daysLabel = Number.isFinite(lvl.days) ? lvl.days.toFixed(1) : (lvl.days || 0);
+            return `<tr>
+              <td>#${t.ticket_id}</td>
+              <td>${t.subject || "-"}</td>
+              <td>${t.technician_name || t.technician || "Sin técnico"}</td>
+              <td><span class="pill ${band}">${pct}%</span></td>
+              <td>${daysLabel}d</td>
+              <td>${link}</td>
+            </tr>`;
+          })
+          .join("");
+        container.innerHTML = `<table>
+          <thead><tr><th>Ticket</th><th>Asunto</th><th>Técnico</th><th>Riesgo</th><th>Días</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
       };
 
       const bandsFromTickets = (tickets = []) => {
@@ -2509,15 +2626,13 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
                 (g.bands?.naranja || 0) +
                 (g.bands?.amarillo || 0) +
                 (g.bands?.verde || 0);
-              const topBand = Object.entries(g.bands || []).sort((a, b) => (b[1] || 0) - (a[1] || 0))[0]?.[0];
               return `<tr>
                 <td>${g.group || "Sin grupo"}</td>
                 <td><span class="pill rojo">${high}</span></td>
                 <td>${total}</td>
-                <td>${topBand ? `<span class="pill ${topBand}">${topBand}</span>` : "-"}</td>
               </tr>`;
             })
-            .join("") || `<tr><td colspan="4" class="muted">Sin datos.</td></tr>`;
+            .join("") || `<tr><td colspan="3" class="muted">Sin datos.</td></tr>`;
       };
 
       const renderTickets = (tickets) => {
@@ -2574,46 +2689,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderTechChart(topTechnicians(tickets, 8));
         renderLevelChart(levelCounts(tickets));
         renderTickets(topTickets(tickets, 10));
-        // Personas view reuse
-        const techCanvas2 = document.getElementById("techChart2");
-        if (techCanvas2) {
-          destroyChart("tech2");
-          charts.tech2 = new Chart(techCanvas2.getContext("2d"), {
-            type: "bar",
-            data: {
-              labels: topTechnicians(tickets, 12).map(t => t.name),
-              datasets: [{
-                label: "Tickets en riesgo alto",
-                data: topTechnicians(tickets, 12).map(t => t.count),
-                backgroundColor: "rgba(56, 189, 248, 0.55)",
-                borderColor: "#38bdf8",
-                borderWidth: 1.5,
-                borderRadius: 8,
-              }],
-            },
-            options: {
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
-                y: { ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(148,163,184,0.2)" } },
-              },
-            },
-          });
-        }
-        const groupTable2 = document.getElementById("groupTable2");
-        if (groupTable2) {
-          const rows = grouped.map((g) => {
-            const high = (g.bands?.rojo || 0) + (g.bands?.naranja || 0);
-            const total =
-              (g.bands?.rojo || 0) +
-              (g.bands?.naranja || 0) +
-              (g.bands?.amarillo || 0) +
-              (g.bands?.verde || 0);
-            return `<tr><td>${g.group}</td><td>${high}</td><td>${total}</td></tr>`;
-          }).join("") || "<tr><td colspan='3' class='muted'>Sin grupos.</td></tr>";
-          groupTable2.innerHTML = `<table><thead><tr><th>Grupo</th><th>Alto</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
-        }
+        renderPersonaGroups(grouped);
+        renderPersonaTickets(grouped);
         renderServiceSummary(tickets);
         renderPauseSummary(tickets);
         const pauseThreshWrap = document.getElementById("pauseThreshChips");
@@ -2718,7 +2795,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             btn.classList.add("active");
             const view = btn.getAttribute("data-view");
             views.forEach((v) => {
-              v.style.display = v.id === `view-${view}` || v.id === `view-${view}-row` ? "" : "none";
+              const isPersona = view === "personas" && (v.id === "view-personas-row" || v.id === "view-personas-detail");
+              v.style.display = (v.id === `view-${view}` || v.id === `view-${view}-row` || isPersona) ? "" : "none";
             });
           });
         });
