@@ -2173,16 +2173,18 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="card" style="margin-top:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-          <div>
-            <p class="eyebrow">Tickets</p>
-            <h3>Riesgo más alto</h3>
-            <p class="muted">Top 10 tickets con mayor ratio.</p>
+      <div class="view" id="view-resumen-list">
+        <div class="card" style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <p class="eyebrow">Tickets</p>
+              <h3>Riesgo más alto</h3>
+              <p class="muted">Top 10 tickets con mayor ratio.</p>
+            </div>
+            <span class="tag">Ordenado</span>
           </div>
-          <span class="tag">Ordenado</span>
+          <div class="list" id="ticketList" style="margin-top:10px;"></div>
         </div>
-        <div class="list" id="ticketList" style="margin-top:10px;"></div>
       </div>
       </div> <!-- views -->
 
@@ -2855,7 +2857,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             const view = btn.getAttribute("data-view");
             views.forEach((v) => {
               const isPersona = view === "personas" && (v.id === "view-personas-row" || v.id === "view-personas-detail");
-              v.style.display = (v.id === `view-${view}` || v.id === `view-${view}-row` || isPersona) ? "" : "none";
+              const isResumen = view === "resumen" && (v.id === "view-resumen-list");
+              v.style.display = (v.id === `view-${view}` || v.id === `view-${view}-row` || isPersona || isResumen) ? "" : "none";
             });
           });
         });
