@@ -2200,39 +2200,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
       </div>
       </div> <!-- views -->
 
-      <div class="view" id="view-servicios" style="display:none; display:grid; gap:14px;">
-        <div class="card">
-          <div id="serviceFilters" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;"></div>
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; align-items:flex-start;">
-            <div>
-              <p class="eyebrow">Tipo de requerimiento</p>
-              <canvas id="serviceTypeChart" aria-label="Tipo de requerimiento"></canvas>
-            </div>
-            <div>
-              <p class="eyebrow">Categoría</p>
-              <canvas id="serviceCatChart" aria-label="Categorías"></canvas>
-            </div>
-            <div>
-              <p class="eyebrow">Subcategoría</p>
-              <canvas id="serviceSubcatChart" aria-label="Subcategorías"></canvas>
-            </div>
-            <div>
-              <p class="eyebrow">Item</p>
-              <canvas id="serviceItemChart" aria-label="Items"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-            <div>
-              <p class="eyebrow">Tickets</p>
-              <h3>Detalle por servicio</h3>
-              <p class="muted">Muestra los tickets filtrados con banda y umbral.</p>
-            </div>
-          </div>
-          <div id="serviceTickets"></div>
-        </div>
-      </div>
+      <!-- Servicios view eliminado según solicitud -->
 
     </div>
     <script>
