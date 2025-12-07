@@ -2091,7 +2091,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         <button class="active" data-view="resumen">Resumen</button>
         <button data-view="personas">Personas</button>
         <button data-view="servicios">Servicios</button>
-        <button data-view="pausa">Pausa</button>
       </div>
 
       <div class="views">
@@ -2424,12 +2423,14 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
               })
               .join("");
             ticketBox.innerHTML = `<div class="muted" style="margin-bottom:6px;">Tickets: ${filtered.length}</div>
-              <table>
-                <thead><tr>
-                  <th>Ticket</th><th>Asunto</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th><th>Item</th><th>Riesgo</th><th>Umbral</th><th></th>
-                </tr></thead>
-                <tbody>${rows}</tbody>
-              </table>`;
+              <div style="max-height: 420px; overflow:auto;">
+                <table>
+                  <thead><tr>
+                    <th>Ticket</th><th>Asunto</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th><th>Item</th><th>Riesgo</th><th>Umbral</th><th></th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>`;
           }
         }
       };
@@ -2860,10 +2861,13 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderServiceSection(tickets);
         renderPauseSummary(tickets);
         const pauseThreshWrap = document.getElementById("pauseThreshChips");
-        if (pauseThreshWrap && !pauseThreshWrap.hasChildNodes()) {
-          const thresholds = Array.from(new Set((groups.flatMap(g => g.tickets || []) || [])
-            .filter(t => (t.pause_threshold_days || 0) > 0)
-            .map(t => Number(t.pause_threshold_days || 0)))).sort((a,b)=>a-b);
+        if (pauseThreshWrap) {
+          pauseThreshWrap.innerHTML = "";
+          const thresholds = Array.from(new Set(
+            tickets
+              .filter(t => (t.pause_threshold_days || 0) > 0)
+              .map(t => Number(t.pause_threshold_days || 0))
+          )).sort((a,b)=>a-b);
           const mk = (label, val, active=false) => {
             const btn = document.createElement("button");
             btn.className = "chip-btn" + (active ? " active" : "");
@@ -2877,8 +2881,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             });
             return btn;
           };
-          pauseThreshWrap.appendChild(mk("Todos los umbrales", "", true));
-          thresholds.forEach(t => pauseThreshWrap.appendChild(mk(`${t}d`, t)));
+          pauseThreshWrap.appendChild(mk("Todos los umbrales", "", ui.pauseThreshold === "" || !thresholds.length));
+          thresholds.forEach(t => pauseThreshWrap.appendChild(mk(`${t}d`, t, ui.pauseThreshold && Number(ui.pauseThreshold) === t)));
           pauseThreshWrap.style.display = ui.mode === "pausa" ? "inline-flex" : "none";
         }
       }
