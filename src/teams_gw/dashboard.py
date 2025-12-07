@@ -2196,21 +2196,27 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
             </div>
           </div>
           <div id="serviceSummary"></div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; margin-top:12px;">
+            <div>
+              <p class="eyebrow">Tipo de requerimiento</p>
+              <canvas id="serviceTypeChart" aria-label="Tipo de requerimiento"></canvas>
+            </div>
+            <div>
+              <p class="eyebrow">Categoría</p>
+              <canvas id="serviceCatChart" aria-label="Categorías"></canvas>
+            </div>
+            <div>
+              <p class="eyebrow">Subcategoría</p>
+              <canvas id="serviceSubcatChart" aria-label="Subcategorías"></canvas>
+            </div>
+            <div>
+              <p class="eyebrow">Item</p>
+              <canvas id="serviceItemChart" aria-label="Items"></canvas>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="view" id="view-pausa" style="display:none;">
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-            <div>
-              <p class="eyebrow">Pausa</p>
-              <h3>Tickets en pausa por categoría</h3>
-              <p class="muted">Filtra con el chip de pausa; muestra conteo y detalle.</p>
-            </div>
-          </div>
-          <div id="pauseSummary"></div>
-        </div>
-      </div>
     </div>
     <script>
       const baseUrl = window.location.origin;
@@ -2319,6 +2325,54 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           return `<tr><td>${cat}</td><td>${info.total}</td><td>${subs}</td></tr>`;
         }).join("");
         container.innerHTML = `<table><thead><tr><th>Categoría</th><th>Total</th><th>Subcategorías</th></tr></thead><tbody>${rows}</tbody></table>`;
+      };
+
+      const renderServiceCharts = (tickets) => {
+        const countBy = (field) => {
+          const counts = {};
+          tickets.forEach((t) => {
+            const key = t[field] || "Sin dato";
+            counts[key] = (counts[key] || 0) + 1;
+          });
+          return counts;
+        };
+        const buildChart = (id, data, type = "bar", title = "") => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const labels = Object.keys(data);
+          const values = Object.values(data);
+          destroyChart(id);
+          charts[id] = new Chart(el.getContext("2d"), {
+            type,
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: title || "Tickets",
+                  data: values,
+                  backgroundColor: labels.map(() => "rgba(56, 189, 248, 0.55)"),
+                  borderColor: labels.map(() => "#38bdf8"),
+                  borderWidth: 1.5,
+                  borderRadius: 8,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: type === "bar"
+                ? {
+                    x: { ticks: { color: "#cbd5e1", autoSkip: true, maxRotation: 30 }, grid: { display: false } },
+                    y: { ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(148,163,184,0.2)" } },
+                  }
+                : {},
+            },
+          });
+        };
+        buildChart("serviceTypeChart", countBy("request_type"), "doughnut", "Tipo");
+        buildChart("serviceCatChart", countBy("category"), "bar", "Categoría");
+        buildChart("serviceSubcatChart", countBy("subcategory"), "bar", "Subcategoría");
+        buildChart("serviceItemChart", countBy("item"), "bar", "Item");
       };
 
       const renderPauseSummary = (tickets) => {
@@ -2696,6 +2750,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderPersonaGroups(grouped);
         renderPersonaTickets(grouped);
         renderServiceSummary(tickets);
+        renderServiceCharts(tickets);
         renderPauseSummary(tickets);
         const pauseThreshWrap = document.getElementById("pauseThreshChips");
         if (pauseThreshWrap && !pauseThreshWrap.hasChildNodes()) {
