@@ -2190,8 +2190,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
 
       <div class="view" id="view-servicios" style="display:none; display:grid; gap:14px;">
         <div class="card">
-          <div id="serviceFilters" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;"></div>
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; align-items:flex-start;">
+          <div id="serviceFilters" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;"></div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; align-items:flex-start;">
             <div>
               <p class="eyebrow">Tipo de requerimiento</p>
               <canvas id="serviceTypeChart" aria-label="Tipo de requerimiento"></canvas>
@@ -2335,9 +2335,18 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
 
       const applyServiceFilters = (tickets) => {
         const f = serviceState.filters;
+        const rt = (f.request_type || "").toLowerCase();
+        const catMatchesType = (cat) => {
+          const c = (cat || "").toLowerCase();
+          if (!rt) return true;
+          if (rt.includes("inc")) return c.includes("inc");
+          if (rt.includes("req")) return c.includes("req");
+          return true;
+        };
         return tickets.filter((t) => {
           if (f.request_type && (t.request_type || "Sin dato") !== f.request_type) return false;
           if (f.category && (t.category || "Sin dato") !== f.category) return false;
+          if (!catMatchesType(t.category)) return false;
           if (f.subcategory && (t.subcategory || "Sin dato") !== f.subcategory) return false;
           if (f.item && (t.item || "Sin dato") !== f.item) return false;
           return true;
@@ -2367,12 +2376,20 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         };
         const base = tickets;
         const filteredReq = state.request_type ? base.filter(t => (t.request_type || "Sin dato") === state.request_type) : base;
-        const filteredCat = state.category ? filteredReq.filter(t => (t.category || "Sin dato") === state.category) : filteredReq;
-        const filteredSub = state.subcategory ? filteredCat.filter(t => (t.subcategory || "Sin dato") === state.subcategory) : filteredCat;
+        const filteredCat = filteredReq.filter(t => {
+          const cat = t.category || "Sin dato";
+          const req = (state.request_type || "").toLowerCase();
+          if (!req) return true;
+          if (req.includes("inc")) return cat.toLowerCase().includes("inc");
+          if (req.includes("req")) return cat.toLowerCase().includes("req");
+          return true;
+        });
+        const filteredCatSel = state.category ? filteredCat.filter(t => (t.category || "Sin dato") === state.category) : filteredCat;
+        const filteredSub = state.subcategory ? filteredCatSel.filter(t => (t.subcategory || "Sin dato") === state.subcategory) : filteredCatSel;
         const selects = [
           { id: "sf-req", field: "request_type", opts: buildOptions(countField("request_type", base), "Tipo (todos)"), value: state.request_type },
           { id: "sf-cat", field: "category", opts: buildOptions(countField("category", filteredReq), "Categoría (todas)"), value: state.category },
-          { id: "sf-sub", field: "subcategory", opts: buildOptions(countField("subcategory", filteredCat), "Subcategoría (todas)"), value: state.subcategory },
+          { id: "sf-sub", field: "subcategory", opts: buildOptions(countField("subcategory", filteredCatSel), "Subcategoría (todas)"), value: state.subcategory },
           { id: "sf-item", field: "item", opts: buildOptions(countField("item", filteredSub), "Item (todos)"), value: state.item },
         ];
         selects.forEach(({ id, field, opts, value }) => {
