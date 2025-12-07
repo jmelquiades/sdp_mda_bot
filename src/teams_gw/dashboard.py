@@ -2173,7 +2173,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="view" id="view-resumen-list">
+      <div class="view" id="view-resumen-list" style="display:none;">
         <div class="card" style="margin-top:14px;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
@@ -2341,6 +2341,7 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         const buildChart = (id, data, type = "bar", title = "") => {
           const el = document.getElementById(id);
           if (!el) return;
+          el.height = 260;
           const labels = Object.keys(data);
           const values = Object.values(data);
           destroyChart(id);
