@@ -2237,10 +2237,8 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           const isActive = (t.threshold_days || 0) > 0;
           if (!isActive) return false;
           if (ui.level) {
-            const lvlIdx = LEVELS_ACTIVE.findIndex((l) => l.id === ui.level);
-            if (lvlIdx === -1) return true;
-            const current = LEVELS_ACTIVE[lvlIdx];
-            return Number(t.threshold_days || 0) === Number(current.threshold || 0);
+            const current = levelForTicket(t).current;
+            return current && current.id === ui.level;
           }
           return true;
         });
