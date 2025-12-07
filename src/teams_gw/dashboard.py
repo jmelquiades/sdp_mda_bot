@@ -2220,6 +2220,16 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           </div>
           <div id="serviceSummary"></div>
         </div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <p class="eyebrow">Tickets</p>
+              <h3>Detalle por servicio</h3>
+              <p class="muted">Muestra los tickets filtrados con banda y umbral.</p>
+            </div>
+          </div>
+          <div id="serviceTickets"></div>
+        </div>
       </div>
 
     </div>
@@ -2417,6 +2427,38 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         renderServiceFilters(tickets);
         renderServiceCharts(filtered);
         renderServiceSummary(filtered);
+        const ticketBox = document.getElementById("serviceTickets");
+        if (ticketBox) {
+          if (!filtered.length) {
+            ticketBox.innerHTML = "<p class='muted'>Sin tickets.</p>";
+          } else {
+            const rows = filtered
+              .map((t) => {
+                const pct = Math.round((ratioFor(t) || 0) * 100);
+                const band = bandKeyFor(t);
+                const link = t.ticket_link ? `<a href="${t.ticket_link}" target="_blank" rel="noopener">Abrir</a>` : "-";
+                return `<tr>
+                  <td>#${t.ticket_id}</td>
+                  <td>${t.subject || "-"}</td>
+                  <td>${t.request_type || "-"}</td>
+                  <td>${t.category || "-"}</td>
+                  <td>${t.subcategory || "-"}</td>
+                  <td>${t.item || "-"}</td>
+                  <td><span class="pill ${band}">${pct}%</span></td>
+                  <td>${t.threshold_days || "-"}</td>
+                  <td>${link}</td>
+                </tr>`;
+              })
+              .join("");
+            ticketBox.innerHTML = `<div class="muted" style="margin-bottom:6px;">Tickets: ${filtered.length}</div>
+              <table>
+                <thead><tr>
+                  <th>Ticket</th><th>Asunto</th><th>Tipo</th><th>Categoría</th><th>Subcategoría</th><th>Item</th><th>Riesgo</th><th>Umbral</th><th></th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>`;
+          }
+        }
       };
 
       const renderServiceCharts = (tickets) => {
