@@ -2213,16 +2213,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
             <div>
-              <p class="eyebrow">Servicios</p>
-              <h3>Distribución por categoría</h3>
-              <p class="muted">Conteo de tickets por categoría y subcategoría.</p>
-            </div>
-          </div>
-          <div id="serviceSummary"></div>
-        </div>
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-            <div>
               <p class="eyebrow">Tickets</p>
               <h3>Detalle por servicio</h3>
               <p class="muted">Muestra los tickets filtrados con banda y umbral.</p>
@@ -2324,25 +2314,6 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
         return LEVELS_ACTIVE.map((lvl) => counts[lvl.id] || 0);
       };
 
-      const renderServiceSummary = (tickets) => {
-        const container = document.getElementById("serviceSummary");
-        if (!container) return;
-        if (!tickets.length) { container.innerHTML = "<p class='muted'>Sin tickets.</p>"; return; }
-        const counts = {};
-        tickets.forEach((t) => {
-          const cat = t.category || "Sin categoría";
-          const sub = t.subcategory || "Sin subcategoría";
-          counts[cat] = counts[cat] || { total: 0, subs: {} };
-          counts[cat].total += 1;
-          counts[cat].subs[sub] = (counts[cat].subs[sub] || 0) + 1;
-        });
-        const rows = Object.entries(counts).map(([cat, info]) => {
-          const subs = Object.entries(info.subs).sort((a,b)=>b[1]-a[1]).map(([sub,c])=>`${sub} (${c})`).join(", ");
-          return `<tr><td>${cat}</td><td>${info.total}</td><td>${subs}</td></tr>`;
-        }).join("");
-        container.innerHTML = `<table><thead><tr><th>Categoría</th><th>Total</th><th>Subcategorías</th></tr></thead><tbody>${rows}</tbody></table>`;
-      };
-
       const applyServiceFilters = (tickets) => {
         const f = serviceState.filters;
         const rt = (f.request_type || "").toLowerCase();
@@ -2385,8 +2356,10 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           return counts;
         };
         const base = tickets;
-        const filteredReq = state.request_type ? base.filter(t => (t.request_type || "Sin dato") === state.request_type) : base;
-        const filteredCat = filteredReq.filter(t => {
+        const reqFiltered = state.request_type
+          ? base.filter(t => (t.request_type || "Sin dato") === state.request_type)
+          : base;
+        const catFiltered = reqFiltered.filter(t => {
           const cat = t.category || "Sin dato";
           const req = (state.request_type || "").toLowerCase();
           if (!req) return true;
@@ -2394,13 +2367,13 @@ OPERATIVO_TEMPLATE = """<!DOCTYPE html>
           if (req.includes("req")) return cat.toLowerCase().includes("req");
           return true;
         });
-        const filteredCatSel = state.category ? filteredCat.filter(t => (t.category || "Sin dato") === state.category) : filteredCat;
-        const filteredSub = state.subcategory ? filteredCatSel.filter(t => (t.subcategory || "Sin dato") === state.subcategory) : filteredCatSel;
+        const catSelected = state.category ? catFiltered.filter(t => (t.category || "Sin dato") === state.category) : catFiltered;
+        const subFiltered = state.subcategory ? catSelected.filter(t => (t.subcategory || "Sin dato") === state.subcategory) : catSelected;
         const selects = [
           { id: "sf-req", field: "request_type", opts: buildOptions(countField("request_type", base), "Tipo (todos)"), value: state.request_type },
-          { id: "sf-cat", field: "category", opts: buildOptions(countField("category", filteredReq), "Categoría (todas)"), value: state.category },
-          { id: "sf-sub", field: "subcategory", opts: buildOptions(countField("subcategory", filteredCatSel), "Subcategoría (todas)"), value: state.subcategory },
-          { id: "sf-item", field: "item", opts: buildOptions(countField("item", filteredSub), "Item (todos)"), value: state.item },
+          { id: "sf-cat", field: "category", opts: buildOptions(countField("category", catFiltered), "Categoría (todas)"), value: state.category },
+          { id: "sf-sub", field: "subcategory", opts: buildOptions(countField("subcategory", catSelected), "Subcategoría (todas)"), value: state.subcategory },
+          { id: "sf-item", field: "item", opts: buildOptions(countField("item", subFiltered), "Item (todos)"), value: state.item },
         ];
         selects.forEach(({ id, field, opts, value }) => {
           const sel = document.createElement("select");
