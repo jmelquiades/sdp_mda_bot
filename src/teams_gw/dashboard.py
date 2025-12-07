@@ -1366,8 +1366,11 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
       <div class="card-grid" id="tact-grid">
         <div class="card">
           <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
-            <h3 style="margin:0;">Backlog (últimas corridas)</h3>
-            <div id="tact-filters" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;"></div>
+            <div>
+              <p class="muted" style="margin:0;">Tendencia de backlog</p>
+              <h3 style="margin:0;">Backlog (últimas corridas)</h3>
+            </div>
+            <div id="tact-delta" class="chip" style="background:#eff6ff; border-color:#dbeafe; color:#1d4ed8;">-</div>
           </div>
           <div id="tact-trend" class="muted" style="margin-top:6px;">Cargando…</div>
         </div>
@@ -1385,60 +1388,36 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         if (Number.isNaN(d.getTime())) return val;
         return d.toLocaleString("es-PE", { ...opts, timeZone: "America/Lima" });
       };
-      const buildSelect = (id, opts, onChange) => {
-        const sel = document.createElement("select");
-        sel.id = id;
-        sel.style.minWidth = "140px";
-        opts.forEach(o => {
-          const opt = document.createElement("option");
-          opt.value = o.value;
-          opt.textContent = o.label;
-          sel.appendChild(opt);
-        });
-        sel.addEventListener("change", () => onChange(sel.value || ""));
-        return sel;
-      };
       fetch("/controller/tactical").then(r => r.json()).then(data => {
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
-        const trend = (data.backlog_trend||[]).slice(0,20).reverse();
-        const rulesSeries = data.rules_series_daily || data.rules_series || [];
-        const rulesMeta = data.rules_meta || [];
-        const typeOpts = [{value:"", label:"Tipo (todos)"}];
-        const levelOptsAll = [{value:"", label:"Nivel (todos)"}];
-        const triggersById = {};
-        rulesMeta.forEach(m => {
-          triggersById[m.id] = m.trigger;
-          if (m.trigger && !typeOpts.find(o=>o.value===m.trigger)) {
-            typeOpts.push({value:m.trigger, label: m.trigger.toUpperCase()});
-          }
-        });
-        const filterState = { tipo: "", nivel: "" };
-        const redrawTrend = () => {
-          const series = rulesSeries.slice(0,20).reverse();
-          const values = series.map(r => {
-            if (filterState.nivel) return (r.by_rule && r.by_rule[filterState.nivel]) || 0;
-            if (filterState.tipo) {
-              let total = 0;
-              Object.entries(r.by_rule || {}).forEach(([rid,val]) => {
-                if ((triggersById[rid] || "").toLowerCase() === filterState.tipo.toLowerCase()) total += val;
-              });
-              return total;
-            }
-            return r.total || 0;
-          });
-          const labels = series.map(r => r.run_started_at);
-          if (!series.length) { document.getElementById("tact-trend").innerHTML = "Sin datos"; return; }
+        const trend = (data.backlog_trend||[]).slice(0,30).reverse();
+        if (!trend.length) {
+          document.getElementById("tact-trend").innerHTML = "Sin datos";
+          document.getElementById("tact-delta").textContent = "-";
+        } else {
+          const first = trend[0].count || 0;
+          const last = trend[trend.length - 1].count || 0;
+          const diff = last - first;
+          const pct = first ? Math.round((diff / first) * 100) : 0;
+          const sign = diff > 0 ? "+" : "";
+          const delta = `${sign}${diff} (${sign}${pct}%)`;
+          const deltaBox = document.getElementById("tact-delta");
+          deltaBox.textContent = delta;
+          deltaBox.style.background = diff <= 0 ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)";
+          deltaBox.style.borderColor = diff <= 0 ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)";
+          deltaBox.style.color = diff <= 0 ? "#166534" : "#991b1b";
+
           const ctxId = "tact-chart";
-          document.getElementById("tact-trend").innerHTML = `<canvas id="${ctxId}" height="160"></canvas>`;
+          document.getElementById("tact-trend").innerHTML = `<canvas id="${ctxId}" height="200"></canvas>`;
           const ctx = document.getElementById(ctxId).getContext("2d");
           if (window.tactChart) { window.tactChart.destroy(); }
           window.tactChart = new Chart(ctx, {
             type: "line",
             data: {
-              labels: labels.map(d => fmtDate(d, { dateStyle: "short" })),
+              labels: trend.map(d => fmtDate(d.timestamp, { dateStyle: "short" })),
               datasets: [{
-                label: "Reglas",
-                data: values,
+                label: "Backlog",
+                data: trend.map(d => d.count || 0),
                 fill: true,
                 tension: 0.35,
                 borderColor: "#2563eb",
@@ -1454,8 +1433,8 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
                 legend: { display: false },
                 tooltip: {
                   callbacks: {
-                    label: (ctx) => `${ctx.parsed.y} reglas`,
-                    title: (items) => items.map(i => fmtDate(series[i.dataIndex].run_started_at, { dateStyle:"medium"})),
+                    label: (ctx) => `${ctx.parsed.y} tickets`,
+                    title: (items) => items.map(i => fmtDate(trend[i.dataIndex].timestamp, { dateStyle:"medium", timeStyle:"short"})),
                   },
                 },
               },
@@ -1465,32 +1444,7 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
               },
             },
           });
-        };
-        const filtersBox = document.getElementById("tact-filters");
-        filtersBox.innerHTML = "";
-        const levelOpts = () => {
-          const opts = [{value:"", label:"Nivel (todos)"}];
-          rulesMeta.forEach(m => {
-            if (filterState.tipo && m.trigger.toLowerCase() !== filterState.tipo.toLowerCase()) return;
-            opts.push({value:m.id, label: m.name || m.id});
-          });
-          return opts;
-        };
-        filtersBox.appendChild(buildSelect("f-type", typeOpts, (val)=>{
-          filterState.tipo=val;
-          filterState.nivel="";
-          const selNivel = document.getElementById("f-level");
-          if (selNivel) {
-            const newOpts = levelOpts();
-            selNivel.innerHTML = "";
-            newOpts.forEach(o=>{ const opt=document.createElement("option"); opt.value=o.value; opt.textContent=o.label; selNivel.appendChild(opt); });
-          }
-          redrawTrend();
-        }));
-        const selLevel = buildSelect("f-level", levelOpts(), (val)=>{ filterState.nivel=val; redrawTrend(); });
-        selLevel.id = "f-level";
-        filtersBox.appendChild(selLevel);
-        redrawTrend();
+        }
         const pause = data.pause_mix || {};
         document.getElementById("tact-pause").innerHTML = Object.entries(pause).map(([k,v])=>`<span class="chip">${k||"N/A"}: ${v}</span>`).join("") || "<span class='muted'>Sin datos</span>";
         const groups = data.top_groups || [];
