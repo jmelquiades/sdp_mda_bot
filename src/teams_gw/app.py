@@ -361,6 +361,26 @@ async def tactical_dashboard_page():
     return render_tactical_dashboard_html()
 
 
+@app.get("/dashboard/data/tactical")
+async def dashboard_tactical_data():
+    # Prefer gateway tactical URL if provided; fallback to controller tactical endpoint.
+    if settings.CONTROLLER_BASE_URL:
+        controller_base = settings.CONTROLLER_BASE_URL.rstrip("/")
+    else:
+        controller_base = _controller_base_url()
+    target = None
+    gw_url = settings.TACTICAL_SOURCE_URL
+    if gw_url:
+        target = gw_url.rstrip("/")
+    else:
+        target = f"{controller_base}/tactical"
+    try:
+        return await fetch_controller_generic(target)
+    except Exception as exc:
+        log.error("Error consulting tactical data: %s", exc)
+        raise HTTPException(status_code=502, detail="tactical_data_unavailable")
+
+
 @app.get("/dashboard/ejecutivo", response_class=HTMLResponse)
 async def executive_dashboard_page():
     return render_executive_dashboard_html()

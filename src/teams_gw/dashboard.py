@@ -1328,25 +1328,28 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vista Táctica</title>
     <style>
-      body { margin:0; font-family: "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0f172a; color:#0b172a; }
-      .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; background: linear-gradient(135deg, #f8fafc, #e0f2fe); min-height: 100vh; }
-      .hero { display:flex; justify-content: space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
-      .hero h1 { margin:0; font-size:28px; color:#0f172a; }
-      .hero .muted { color:#475569; margin:4px 0 0; }
-      .card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(420px,1fr)); gap:12px; margin-top:14px; }
-      .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:16px; box-shadow:0 12px 28px rgba(15,23,42,0.08); }
-      .card h3 { margin:0 0 8px; font-size:16px; color:#0f172a; }
-      .muted { color:#475569; font-size:13px; margin:0 0 8px; }
-      .chip { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #e2e8f0; background:#f8fafc; font-size:12px; margin:2px; }
-      .mini-table { width:100%; border-collapse:collapse; font-size:13px; }
-      .mini-table th, .mini-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
-      .mini-table th { color:#475569; }
-      .bar { height:8px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin:6px 0; }
-      .bar-fill { height:100%; background: linear-gradient(90deg,#3b82f6,#22c55e); }
-      .spark { width: 100%; height: 140px; }
-      .axis-labels { display:flex; justify-content:space-between; font-size:11px; color:#475569; margin-top:4px; }
-      .axis-y { display:flex; flex-direction:column; justify-content:space-between; font-size:11px; color:#475569; margin-right:6px; }
-      .trend-area { display:flex; align-items:stretch; gap:6px; }
+      body { margin:0; font-family: "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0b1224; color:#e2e8f0; }
+      .wrap { max-width: 1280px; margin: 0 auto; padding: 18px; }
+      .hero { display:flex; justify-content: space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+      .hero h1 { margin:0; font-size:28px; color:#e0f2fe; }
+      .hero .muted { color:#94a3b8; margin:4px 0 0; }
+      .badge { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; }
+      .badge.success { background:rgba(34,197,94,0.18); color:#bbf7d0; border:1px solid rgba(34,197,94,0.35); }
+      .badge.danger { background:rgba(239,68,68,0.18); color:#fecdd3; border:1px solid rgba(239,68,68,0.35); }
+      .card-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(340px,1fr)); gap:12px; margin-top:14px; }
+      .card { background:rgba(12, 18, 34, 0.9); border:1px solid rgba(148,163,184,0.25); border-radius:14px; padding:16px; box-shadow:0 12px 28px rgba(0,0,0,0.3); }
+      .card h3 { margin:0 0 6px; font-size:17px; color:#e2e8f0; }
+      .muted { color:#94a3b8; font-size:13px; margin:0 0 6px; }
+      .chips { display:flex; gap:8px; flex-wrap:wrap; }
+      .chip { display:inline-block; padding:6px 12px; border-radius:999px; border:1px solid rgba(148,163,184,0.35); background:rgba(15,23,42,0.6); font-size:12px; }
+      .kpi { display:flex; align-items:center; gap:8px; }
+      .kpi .value { font-size:24px; font-weight:700; color:#e2e8f0; }
+      .kpi .label { color:#94a3b8; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; }
+      canvas { width:100%; }
+      table { width:100%; border-collapse:collapse; }
+      th, td { padding:8px 10px; border-bottom:1px solid rgba(148,163,184,0.15); text-align:left; font-size:13px; }
+      th { color:#cbd5e1; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+      td { color:#e2e8f0; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
@@ -1367,17 +1370,30 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         <div class="card">
           <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
             <div>
-              <p class="muted" style="margin:0;">Tendencia de backlog</p>
+              <p class="muted" style="margin:0;">Tendencia de pendientes</p>
               <h3 style="margin:0;">Backlog (últimas corridas)</h3>
             </div>
-            <div id="tact-delta" class="chip" style="background:#eff6ff; border-color:#dbeafe; color:#1d4ed8;">-</div>
+            <div id="tact-delta" class="badge">-</div>
           </div>
           <div id="tact-trend" class="muted" style="margin-top:6px;">Cargando…</div>
         </div>
-        <div class="card"><h3>Pausa por categoría</h3><div id="tact-pause"></div></div>
-        <div class="card"><h3>Top grupos (activo promedio)</h3><div id="tact-groups"></div></div>
-        <div class="card"><h3>Tiempo por sitio (activo/asignado)</h3><div id="tact-sites"></div></div>
-        <div class="card"><h3>Recordatorios disparados</h3><div id="tact-rem"></div></div>
+        <div class="card">
+          <h3>Bandas actuales</h3>
+          <p class="muted">Foto actual del backlog.</p>
+          <div class="chips" id="tact-bands"></div>
+        </div>
+        <div class="card">
+          <h3>Pausa por categoría</h3>
+          <div id="tact-pause"></div>
+        </div>
+        <div class="card">
+          <h3>Top grupos (activo promedio)</h3>
+          <div id="tact-groups"></div>
+        </div>
+        <div class="card">
+          <h3>Tiempo por sitio</h3>
+          <div id="tact-sites"></div>
+        </div>
       </div>
     </div>
     <script>
@@ -1388,7 +1404,7 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         if (Number.isNaN(d.getTime())) return val;
         return d.toLocaleString("es-PE", { ...opts, timeZone: "America/Lima" });
       };
-      fetch("/controller/tactical").then(r => r.json()).then(data => {
+      fetch("/dashboard/data/tactical").then(r => r.json()).then(data => {
         document.getElementById("last-updated").textContent = fmtDate(new Date().toISOString());
         const trend = (data.backlog_trend||[]).slice(0,30).reverse();
         if (!trend.length) {
@@ -1403,9 +1419,7 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
           const delta = `${sign}${diff} (${sign}${pct}%)`;
           const deltaBox = document.getElementById("tact-delta");
           deltaBox.textContent = delta;
-          deltaBox.style.background = diff <= 0 ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)";
-          deltaBox.style.borderColor = diff <= 0 ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)";
-          deltaBox.style.color = diff <= 0 ? "#166534" : "#991b1b";
+          deltaBox.className = "badge " + (diff <= 0 ? "success" : "danger");
 
           const ctxId = "tact-chart";
           document.getElementById("tact-trend").innerHTML = `<canvas id="${ctxId}" height="200"></canvas>`;
@@ -1447,15 +1461,60 @@ TACTICO_TEMPLATE = """<!DOCTYPE html>
         }
         const pause = data.pause_mix || {};
         document.getElementById("tact-pause").innerHTML = Object.entries(pause).map(([k,v])=>`<span class="chip">${k||"N/A"}: ${v}</span>`).join("") || "<span class='muted'>Sin datos</span>";
+        const bands = data.bands || {};
+        document.getElementById("tact-bands").innerHTML = Object.entries(bands).map(([k,v])=>`<span class="chip">${k.toUpperCase()}: ${v}</span>`).join("") || "<span class='muted'>Sin datos</span>";
         const groups = data.top_groups || [];
-        document.getElementById("tact-groups").innerHTML = groups.length
-          ? `<table class="mini-table"><thead><tr><th>Grupo</th><th>Activo</th><th>Pausa</th><th>Tickets</th></tr></thead><tbody>${groups.map(g=>`<tr><td>${g.group}</td><td>${g.avg_active_days}</td><td>${g.avg_pause_days}</td><td>${g.count}</td></tr>`).join("")}</tbody></table>`
-          : "<span class='muted'>Sin datos</span>";
+        if (groups.length) {
+          const ctxId = "tact-groups-chart";
+          document.getElementById("tact-groups").innerHTML = `<canvas id="${ctxId}" height="220"></canvas>`;
+          const ctx = document.getElementById(ctxId).getContext("2d");
+          if (window.tactGroupChart) window.tactGroupChart.destroy();
+          window.tactGroupChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: groups.map(g => g.group),
+              datasets: [
+                { label: "Activo", data: groups.map(g => g.avg_active_days), backgroundColor: "rgba(56,189,248,0.6)" },
+                { label: "Pausa", data: groups.map(g => g.avg_pause_days), backgroundColor: "rgba(251,191,36,0.7)" },
+              ],
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+                y: { ticks: { color: "#cbd5e1", precision:0 }, grid: { color: "rgba(148,163,184,0.2)" } },
+              },
+            },
+          });
+        } else {
+          document.getElementById("tact-groups").innerHTML = "<span class='muted'>Sin datos</span>";
+        }
         const sites = data.site_times || [];
-        document.getElementById("tact-sites").innerHTML = sites.length
-          ? `<table class="mini-table"><thead><tr><th>Sitio</th><th>Activo</th><th>Asignado</th><th>Tickets</th></tr></thead><tbody>${sites.map(s=>`<tr><td>${s.site}</td><td>${s.avg_active_days}</td><td>${s.avg_assigned_days}</td><td>${s.count}</td></tr>`).join("")}</tbody></table>`
-          : "<span class='muted'>Sin datos</span>";
-        document.getElementById("tact-rem").innerHTML = `<span class="chip">Recordatorios: ${data.reminders || 0}</span>`;
+        if (sites.length) {
+          const ctxId = "tact-sites-chart";
+          document.getElementById("tact-sites").innerHTML = `<canvas id="${ctxId}" height="220"></canvas>`;
+          const ctx = document.getElementById(ctxId).getContext("2d");
+          if (window.tactSiteChart) window.tactSiteChart.destroy();
+          window.tactSiteChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: sites.map(s => s.site),
+              datasets: [
+                { label: "Activo", data: sites.map(s => s.avg_active_days), backgroundColor: "rgba(56,189,248,0.6)" },
+                { label: "Asignado", data: sites.map(s => s.avg_assigned_days), backgroundColor: "rgba(34,197,94,0.6)" },
+              ],
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+                y: { ticks: { color: "#cbd5e1", precision:0 }, grid: { color: "rgba(148,163,184,0.2)" } },
+              },
+            },
+          });
+        } else {
+          document.getElementById("tact-sites").innerHTML = "<span class='muted'>Sin datos</span>";
+        }
       }).catch(()=> {
         document.getElementById("tact-grid").innerHTML = "<p class='muted'>No se pudo cargar.</p>";
       });
